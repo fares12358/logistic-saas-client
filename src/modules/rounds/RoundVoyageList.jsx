@@ -7,7 +7,7 @@ import { voyagesService } from '@/services/voyages.service';
 import { usePermission } from '@/context/PermissionContext';
 import Badge from '@/components/ui/Badge';
 import Modal from '@/components/ui/Modal';
-import VoyageEditForm from '../voyages/VoyageEditForm';
+import VoyageEditForm from '@/modules/voyages/VoyageEditForm';
 
 const fmt     = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const fmtTime = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : null;

@@ -1,5 +1,8 @@
 'use client';
+import { use } from 'react';
 import AuditLogDetail from '@/modules/auditLogs/AuditLogDetail';
+
 export default function AuditLogDetailPage({ params }) {
-  return <AuditLogDetail logId={params.id} />;
+  const { id } = use(params);
+  return <AuditLogDetail logId={id} />;
 }

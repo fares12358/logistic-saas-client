@@ -1,16 +1,19 @@
 'use client';
-import { useQuery }    from '@tanstack/react-query';
-import { useRouter }   from 'next/navigation';
+import { use } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { expensesService } from '@/services/expenses.service';
-import LoadingSpinner  from '@/components/ui/LoadingSpinner';
-import PageHeader      from '@/components/ui/PageHeader';
-import ExpenseForm     from '@/modules/expenses/ExpenseForm';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import PageHeader from '@/components/ui/PageHeader';
+import ExpenseForm from '@/modules/expenses/ExpenseForm';
 
 export default function EditExpensePage({ params }) {
+  const { id } = use(params);
   const router = useRouter();
+
   const { data: expense, isLoading, isError } = useQuery({
-    queryKey: ['expense', params.id],
-    queryFn:  () => expensesService.getById(params.id).then(r => r.data.data),
+    queryKey: ['expense', id],
+    queryFn: () => expensesService.getById(id).then(r => r.data.data),
   });
 
   if (isLoading) return <LoadingSpinner fullPage />;
@@ -34,7 +37,10 @@ export default function EditExpensePage({ params }) {
         <span className="text-gray-200">/</span>
         <span className="text-sm font-medium text-gray-700">Edit</span>
       </div>
-      <PageHeader title="Edit Expense" subtitle={`${expense.expenseTypeId?.name || ''} — ${expense.currency} ${expense.amount}`} />
+      <PageHeader
+        title="Edit Expense"
+        subtitle={`${expense.expenseTypeId?.name || ''} — ${expense.currency} ${expense.amount}`}
+      />
       <ExpenseForm item={expense} />
     </div>
   );

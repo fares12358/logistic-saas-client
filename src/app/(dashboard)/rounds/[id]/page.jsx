@@ -1,5 +1,8 @@
 'use client';
+import { use } from 'react';
 import RoundDetail from '@/modules/rounds/RoundDetail';
+
 export default function RoundDetailPage({ params }) {
-  return <RoundDetail roundId={params.id} />;
+  const { id } = use(params);
+  return <RoundDetail roundId={id} />;
 }

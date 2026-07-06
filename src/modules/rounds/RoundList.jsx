@@ -17,7 +17,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Modal from '@/components/ui/Modal';
-import RoundForm from './RoundForm';
+import RoundForm from '@/modules/rounds/RoundForm';
 
 import ExportButton from '@/components/ui/ExportButton';
 

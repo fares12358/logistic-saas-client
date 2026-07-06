@@ -8,7 +8,7 @@ import { usePermission }   from '@/context/PermissionContext';
 import Badge   from '@/components/ui/Badge';
 import Modal   from '@/components/ui/Modal';
 import { useState } from 'react';
-import BookingForm from './BookingForm';
+import BookingForm from '@/modules/bookings/BookingForm';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 const fmt      = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';

@@ -19,7 +19,7 @@ import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Modal         from '@/components/ui/Modal';
 import ExportButton from '@/components/ui/ExportButton';
-import BookingForm   from './BookingForm';
+import BookingForm from '@/modules/bookings/BookingForm';
 
 const fmt      = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 const fmtMoney = (n) => n != null ? `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 2 })}` : '—';

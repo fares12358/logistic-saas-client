@@ -1,18 +1,19 @@
 'use client';
-
+import { use } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { bookingsService } from '@/services/bookings.service';
-import LoadingSpinner      from '@/components/ui/LoadingSpinner';
-import BookingDetailCard   from '@/modules/bookings/BookingDetailCard';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import BookingDetailCard from '@/modules/bookings/BookingDetailCard';
 
 export default function BookingDetailPage({ params }) {
+  const { id } = use(params);
   const router = useRouter();
-  const qc     = useQueryClient();
+  const qc = useQueryClient();
 
   const { data: booking, isLoading, isError, refetch } = useQuery({
-    queryKey: ['booking', params.id],
-    queryFn:  () => bookingsService.getById(params.id).then(r => r.data.data),
+    queryKey: ['booking', id],
+    queryFn: () => bookingsService.getById(id).then(r => r.data.data),
   });
 
   if (isLoading) return <LoadingSpinner fullPage />;
@@ -29,7 +30,6 @@ export default function BookingDetailPage({ params }) {
 
   return (
     <div className="animate-fadeIn">
-      {/* Breadcrumb */}
       <div className="flex items-center gap-2 mb-5">
         <button
           onClick={() => router.push('/bookings')}
@@ -43,11 +43,7 @@ export default function BookingDetailPage({ params }) {
         <span className="text-gray-200">/</span>
         <span className="mono text-sm font-bold text-gray-600">{booking.bookingNumber}</span>
       </div>
-
-      <BookingDetailCard
-        booking={booking}
-        onMutated={refetch}
-      />
+      <BookingDetailCard booking={booking} onMutated={refetch} />
     </div>
   );
 }

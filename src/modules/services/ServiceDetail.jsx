@@ -3,13 +3,13 @@
 import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
-import { servicesService } from '@/../services/services.service';
-import { usePermission } from '@/../context/PermissionContext';
-import LoadingSpinner from '@/../components/ui/LoadingSpinner';
-import Button from '@/../components/ui/Button';
-import Badge from '@/../components/ui/Badge';
-import ServiceForm from '@/../modules/services/ServiceForm';
-import RouteEditor from '@/../modules/services/RouteEditor';
+import { servicesService } from '@/services/services.service';
+import { usePermission } from '@/context/PermissionContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
+import ServiceForm from '@/modules/services/ServiceForm';
+import RouteEditor from '@/modules/services/RouteEditor';
 
 const tabs = [
   { key: 'details', label: 'Service Details' },

@@ -15,7 +15,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import Modal from '@/components/ui/Modal';
 import ExportButton from '@/components/ui/ExportButton';
-import VoyageEditForm from './VoyageEditForm';
+import VoyageEditForm from '@/modules/voyages/VoyageEditForm';
 
 const fmt = (d) => d ? new Date(d).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) : '—';
 

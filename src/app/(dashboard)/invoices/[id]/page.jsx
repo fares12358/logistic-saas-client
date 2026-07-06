@@ -1,17 +1,20 @@
 'use client';
-import { useQuery }    from '@tanstack/react-query';
-import { useRouter }   from 'next/navigation';
+import { use } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
 import { invoicesService } from '@/services/invoices.service';
-import LoadingSpinner  from '@/components/ui/LoadingSpinner';
-import PageHeader      from '@/components/ui/PageHeader';
-import InvoiceForm     from '@/modules/invoices/InvoiceForm';
-import Badge           from '@/components/ui/Badge';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import PageHeader from '@/components/ui/PageHeader';
+import InvoiceForm from '@/modules/invoices/InvoiceForm';
+import Badge from '@/components/ui/Badge';
 
 export default function EditInvoicePage({ params }) {
+  const { id } = use(params);
   const router = useRouter();
+
   const { data: invoice, isLoading, isError } = useQuery({
-    queryKey: ['invoice', params.id],
-    queryFn:  () => invoicesService.getById(params.id).then(r => r.data.data),
+    queryKey: ['invoice', id],
+    queryFn: () => invoicesService.getById(id).then(r => r.data.data),
   });
 
   if (isLoading) return <LoadingSpinner fullPage />;

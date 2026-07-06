@@ -17,7 +17,7 @@ import EmptyState from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 import Modal from '@/components/ui/Modal';
-import ServiceForm from './ServiceForm';
+import ServiceForm from '@/modules/services/ServiceForm';
 
 export default function ServiceList() {
   const router  = useRouter();
