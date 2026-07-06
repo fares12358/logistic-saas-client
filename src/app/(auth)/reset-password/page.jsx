@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { authService } from '../../../services/auth.service';
-import Input from '../../../components/ui/Input';
-import Button from '../../../components/ui/Button';
+import { authService } from '@/services/auth.service';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 
 export default function ResetPasswordPage() {
   const params   = useSearchParams();
@@ -29,10 +29,18 @@ export default function ResetPasswordPage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
-          <p className="text-red-500 font-medium">Invalid or missing reset token.</p>
-          <a href="/forgot-password" className="text-blue-600 text-sm hover:underline mt-4 block">Request a new link</a>
+      <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div className="login-card animate-fadeIn" style={{ width: '100%', maxWidth: 420, padding: '40px 36px', textAlign: 'center' }}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <svg width="24" height="24" fill="none" stroke="#DC2626" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', margin: '0 0 10px' }}>Invalid Reset Link</h2>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginBottom: 20 }}>This reset link is missing or invalid.</p>
+          <a href="/forgot-password" style={{ fontSize: 13.5, color: 'var(--teal)', fontWeight: 500, textDecoration: 'none' }}>
+            Request a new link →
+          </a>
         </div>
       </div>
     );
@@ -40,29 +48,40 @@ export default function ResetPasswordPage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div className="login-card animate-fadeIn" style={{ width: '100%', maxWidth: 420, padding: '40px 36px', textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <svg width="26" height="26" fill="none" stroke="#059669" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Password Reset!</h2>
-          <p className="text-gray-500 text-sm">Redirecting you to login...</p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--navy)', margin: '0 0 10px' }}>Password Reset!</h2>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)' }}>Redirecting you to sign in…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Set New Password</h1>
-          <p className="text-gray-500 text-sm mt-1">Choose a strong password for your account</p>
+    <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div className="login-card animate-fadeIn" style={{ width: '100%', maxWidth: 420, padding: '40px 36px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 14,
+            background: 'linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 16px', boxShadow: '0 4px 16px rgba(13,148,136,0.35)',
+          }}>
+            <svg width="24" height="24" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+            </svg>
+          </div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--navy)', margin: 0 }}>Set New Password</h1>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 6 }}>Choose a strong password for your account</p>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <Input id="newPassword" label="New Password" type="password" placeholder="••••••••" required
+
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Input id="newPassword" label="New Password" type="password" placeholder="Min 8 chars, 1 uppercase, 1 number" required
             error={errors.newPassword?.message}
             {...register('newPassword', {
               required: 'Password is required',
@@ -75,7 +94,9 @@ export default function ResetPasswordPage() {
               required: 'Please confirm your password',
               validate: (v) => v === watch('newPassword') || 'Passwords do not match',
             })} />
-          <Button type="submit" className="w-full" loading={isSubmitting}>Reset Password</Button>
+          <Button type="submit" size="lg" loading={isSubmitting} style={{ width: '100%', justifyContent: 'center', marginTop: 4 }}>
+            Reset Password
+          </Button>
         </form>
       </div>
     </div>

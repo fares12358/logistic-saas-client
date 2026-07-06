@@ -1,20 +1,36 @@
-const colors = {
-  Active:    'bg-green-100 text-green-700',
-  Inactive:  'bg-gray-100 text-gray-600',
-  Pending:   'bg-yellow-100 text-yellow-700',
-  Confirmed: 'bg-blue-100 text-blue-700',
-  Cancelled: 'bg-red-100 text-red-700',
-  Draft:     'bg-gray-100 text-gray-600',
-  Issued:    'bg-blue-100 text-blue-700',
-  Paid:      'bg-green-100 text-green-700',
-  Overdue:   'bg-red-100 text-red-700',
-  Planned:   'bg-purple-100 text-purple-700',
-  Completed: 'bg-green-100 text-green-700',
-  Scheduled: 'bg-blue-100 text-blue-700',
-  default:   'bg-gray-100 text-gray-600',
+const BADGE_STYLES = {
+  // Status
+  Active:       { background: '#D1FAE5', color: '#065F46' },
+  Inactive:     { background: '#F1F5F9', color: '#64748B' },
+  // Booking / Invoice
+  Pending:      { background: '#FEF3C7', color: '#92400E' },
+  Confirmed:    { background: '#DBEAFE', color: '#1E40AF' },
+  Cancelled:    { background: '#FEE2E2', color: '#991B1B' },
+  Draft:        { background: '#F1F5F9', color: '#475569' },
+  Issued:       { background: '#E0F2FE', color: '#0369A1' },
+  Paid:         { background: '#D1FAE5', color: '#065F46' },
+  Overdue:      { background: '#FEE2E2', color: '#991B1B' },
+  // Round / Voyage
+  Planned:      { background: '#EDE9FE', color: '#5B21B6' },
+  Completed:    { background: '#D1FAE5', color: '#065F46' },
+  Scheduled:    { background: '#DBEAFE', color: '#1E40AF' },
+  Departed:     { background: '#FEF3C7', color: '#92400E' },
+  Arrived:      { background: '#D1FAE5', color: '#065F46' },
+  'In Transit': { background: '#E0F2FE', color: '#0369A1' },
+  // Tracking
+  'At Port':    { background: '#CCFBF1', color: '#0F766E' },
+  Anchored:     { background: '#F1F5F9', color: '#475569' },
+  Delayed:      { background: '#FEE2E2', color: '#991B1B' },
+  // Under maintenance
+  'Under Maintenance': { background: '#FEF3C7', color: '#92400E' },
+  Sold:         { background: '#F1F5F9', color: '#475569' },
 };
 
 export default function Badge({ label }) {
-  const cls = colors[label] || colors.default;
-  return <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${cls}`}>{label}</span>;
+  const style = BADGE_STYLES[label] || { background: '#F1F5F9', color: '#475569' };
+  return (
+    <span className="badge" style={style}>
+      {label}
+    </span>
+  );
 }

@@ -4,23 +4,23 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { vesselsService } from '../../services/vessels.service';
-import { usePermission } from '../../context/PermissionContext';
-import { downloadFile } from '../../utils/exportHelper';
-import { VESSEL_STATUS } from '../../utils/constants';
-import PageHeader from '../../components/ui/PageHeader';
-import Button from '../../components/ui/Button';
-import Badge from '../../components/ui/Badge';
-import SearchBar from '../../components/ui/SearchBar';
-import Select from '../../components/ui/Select';
-import Pagination from '../../components/ui/Pagination';
-import EmptyState from '../../components/ui/EmptyState';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import ConfirmDialog from '../../components/ui/ConfirmDialog';
+import { vesselsService } from '@/services/vessels.service';
+import { usePermission } from '@/context/PermissionContext';
+import { downloadFile } from '@/utils/exportHelper';
+import { VESSEL_STATUS } from '@/utils/constants';
+import PageHeader from '@/components/ui/PageHeader';
+import Button from '@/components/ui/Button';
+import Badge from '@/components/ui/Badge';
+import SearchBar from '@/components/ui/SearchBar';
+import Select from '@/components/ui/Select';
+import Pagination from '@/components/ui/Pagination';
+import EmptyState from '@/components/ui/EmptyState';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
 export default function VesselList() {
-  const router = useRouter();
-  const qc     = useQueryClient();
+  const router  = useRouter();
+  const qc      = useQueryClient();
   const { can } = usePermission();
 
   const [page,         setPage]         = useState(1);
@@ -44,28 +44,26 @@ export default function VesselList() {
   const vessels    = data?.data || [];
   const pagination = data?.pagination;
 
-  const toggleSelect = (id) => setSelected(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-  const toggleAll    = () => setSelected(prev => prev.length === vessels.length ? [] : vessels.map(v => v._id));
+  const toggleSelect = (id) => setSelected(p => p.includes(id) ? p.filter(x => x !== id) : [...p, id]);
+  const toggleAll    = () => setSelected(p => p.length === vessels.length ? [] : vessels.map(v => v._id));
 
   const handleExport = async (type) => {
     setExporting(true);
     try {
-      const filters     = { search, status };
-      const selectedIds = type === 'selected' ? selected : [];
-      const res         = await vesselsService.export(filters, selectedIds);
-      downloadFile(res.data, `vessels-export-${new Date().toISOString().split('T')[0]}.xlsx`);
+      const res = await vesselsService.export({ search, status }, type === 'selected' ? selected : []);
+      downloadFile(res.data, `vessels-${new Date().toISOString().split('T')[0]}.xlsx`);
       toast.success('Export downloaded');
     } catch { toast.error('Export failed'); }
     finally { setExporting(false); }
   };
 
   return (
-    <div>
+    <div className="animate-fadeIn">
       <PageHeader
         title="Vessels"
         subtitle="Manage your fleet master data"
         action={
-          <div className="flex items-center gap-2">
+          <div style={{ display: 'flex', gap: 8 }}>
             {can('vessels', 'create') && (
               <Button onClick={() => router.push('/vessels/new')}>+ New Vessel</Button>
             )}
@@ -73,64 +71,61 @@ export default function VesselList() {
         }
       />
 
-      {/* Filters & Export */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="flex-1 min-w-48">
-          <SearchBar value={search} onChange={(v) => { setSearch(v); setPage(1); setSelected([]); }} placeholder="Search code, name, IMO..." />
+      {/* Toolbar */}
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 16 }}>
+        <div style={{ flex: 1, minWidth: 220 }}>
+          <SearchBar value={search} onChange={v => { setSearch(v); setPage(1); setSelected([]); }} placeholder="Search code, name, IMO…" />
         </div>
-        <Select value={status} onChange={(e) => { setStatus(e.target.value); setPage(1); setSelected([]); }}
-          options={VESSEL_STATUS.map(s => ({ value: s, label: s }))}
-          placeholder="All Statuses" className="w-44" />
-        <Button variant="secondary" size="sm" onClick={() => handleExport('all')} loading={exporting} disabled={exporting}>
-          Export All
-        </Button>
-        {selected.length > 0 && (
-          <Button variant="secondary" size="sm" onClick={() => handleExport('selected')} loading={exporting}>
-            Export Selected ({selected.length})
+        <Select value={status} onChange={e => { setStatus(e.target.value); setPage(1); setSelected([]); }}
+          options={VESSEL_STATUS.map(s => ({ value: s, label: s }))} placeholder="All Statuses" style={{ width: 160 }} />
+        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
+          <Button variant="secondary" size="sm" onClick={() => handleExport('all')} loading={exporting}>
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+            Export
           </Button>
-        )}
+          {selected.length > 0 && (
+            <Button variant="secondary" size="sm" onClick={() => handleExport('selected')} loading={exporting}>
+              Export {selected.length} selected
+            </Button>
+          )}
+        </div>
       </div>
 
       {/* Table */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+      <div className="card" style={{ overflow: 'hidden' }}>
         {isLoading ? <LoadingSpinner fullPage /> : vessels.length === 0 ? <EmptyState title="No vessels found" /> : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-50 border-b border-gray-100">
-                <tr>
-                  <th className="w-10 px-4 py-3">
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr className="table-header">
+                  <th style={{ width: 40, padding: '10px 16px' }}>
                     <input type="checkbox" checked={selected.length === vessels.length && vessels.length > 0}
-                      onChange={toggleAll} className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+                      onChange={toggleAll} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--teal)' }} />
                   </th>
-                  {['Code', 'Name', 'IMO', 'Flag', 'Ownership', 'TEU', 'DWT', 'Status', 'Actions'].map(h => (
-                    <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">{h}</th>
-                  ))}
+                  {['Code', 'Name', 'IMO', 'Flag', 'Ownership', 'TEU', 'Status', 'Actions'].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
-              <tbody className="divide-y divide-gray-50">
-                {vessels.map((v) => (
-                  <tr key={v._id} className="hover:bg-gray-50 transition-colors">
-                    <td className="px-4 py-3">
+              <tbody>
+                {vessels.map(v => (
+                  <tr key={v._id} className="table-row">
+                    <td style={{ padding: '11px 16px' }}>
                       <input type="checkbox" checked={selected.includes(v._id)} onChange={() => toggleSelect(v._id)}
-                        className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer" />
+                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--teal)' }} />
                     </td>
-                    <td className="px-4 py-3 font-mono font-semibold text-gray-800">{v.vesselCode}</td>
-                    <td className="px-4 py-3 font-medium text-gray-800">{v.vesselName}</td>
-                    <td className="px-4 py-3 text-gray-500 font-mono text-xs">{v.imoNumber || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{v.flag || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{v.ownershipType}</td>
-                    <td className="px-4 py-3 text-gray-600">{v.teuCapacity?.toLocaleString() || '—'}</td>
-                    <td className="px-4 py-3 text-gray-600">{v.dwt?.toLocaleString() || '—'}</td>
-                    <td className="px-4 py-3"><Badge label={v.status} /></td>
-                    <td className="px-4 py-3">
-                      <div className="flex items-center gap-3">
+                    <td><span className="mono" style={{ color: 'var(--teal)', fontWeight: 600 }}>{v.vesselCode}</span></td>
+                    <td><span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{v.vesselName}</span></td>
+                    <td><span className="mono">{v.imoNumber || <span style={{ color: 'var(--text-muted)' }}>—</span>}</span></td>
+                    <td>{v.flag || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
+                    <td>{v.ownershipType}</td>
+                    <td><span className="mono">{v.teuCapacity?.toLocaleString() || <span style={{ color: 'var(--text-muted)' }}>—</span>}</span></td>
+                    <td><Badge label={v.status} /></td>
+                    <td>
+                      <div style={{ display: 'flex', gap: 12 }}>
                         {can('vessels', 'update') && (
-                          <button onClick={() => router.push(`/vessels/${v._id}`)}
-                            className="text-blue-600 hover:underline text-xs font-medium">Edit</button>
+                          <button onClick={() => router.push(`/vessels/${v._id}`)} style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Edit</button>
                         )}
                         {can('vessels', 'delete') && (
-                          <button onClick={() => setDeleteTarget(v)}
-                            className="text-red-500 hover:underline text-xs font-medium">Delete</button>
+                          <button onClick={() => setDeleteTarget(v)} style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete</button>
                         )}
                       </div>
                     </td>
@@ -142,23 +137,20 @@ export default function VesselList() {
         )}
       </div>
 
-      {pagination && (
-        <div className="flex items-center justify-between mt-4">
-          <p className="text-sm text-gray-400">
+      {pagination && pagination.total > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
+          <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
             {pagination.total} vessel{pagination.total !== 1 ? 's' : ''} total
-            {selected.length > 0 && ` · ${selected.length} selected`}
+            {selected.length > 0 && <span style={{ color: 'var(--teal)', fontWeight: 500 }}> · {selected.length} selected</span>}
           </p>
           <Pagination page={pagination.page} totalPages={pagination.totalPages} onPageChange={setPage} />
         </div>
       )}
 
-      <ConfirmDialog
-        open={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={() => deleteMutation.mutate(deleteTarget._id)}
-        loading={deleteMutation.isPending}
+      <ConfirmDialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}
+        onConfirm={() => deleteMutation.mutate(deleteTarget._id)} loading={deleteMutation.isPending}
         title="Delete Vessel"
-        message={`Delete vessel "${deleteTarget?.vesselName}" (${deleteTarget?.vesselCode})? This cannot be undone.`}
+        message={`Delete "${deleteTarget?.vesselName}" (${deleteTarget?.vesselCode})? This action is permanent.`}
       />
     </div>
   );

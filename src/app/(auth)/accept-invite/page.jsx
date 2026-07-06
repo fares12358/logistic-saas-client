@@ -4,9 +4,9 @@ import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useSearchParams, useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { usersService } from '../../../services/users.service';
-import Input from '../../../components/ui/Input';
-import Button from '../../../components/ui/Button';
+import { usersService } from '@/services/users.service';
+import Input from '@/components/ui/Input';
+import Button from '@/components/ui/Button';
 
 export default function AcceptInvitePage() {
   const params = useSearchParams();
@@ -29,10 +29,16 @@ export default function AcceptInvitePage() {
 
   if (!token) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
-          <p className="text-red-500 font-medium">Invalid or missing invitation token.</p>
-          <p className="text-gray-500 text-sm mt-2">Please contact your administrator.</p>
+      <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div className="login-card animate-fadeIn" style={{ width: '100%', maxWidth: 420, padding: '40px 36px', textAlign: 'center' }}>
+          <div style={{ width: 52, height: 52, borderRadius: 14, background: '#FEE2E2', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 16px' }}>
+            <svg width="24" height="24" fill="none" stroke="#DC2626" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M12 9v4m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+            </svg>
+          </div>
+          <h2 style={{ fontSize: 18, fontWeight: 700, color: 'var(--navy)', margin: '0 0 10px' }}>Invalid Invitation</h2>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginBottom: 8 }}>This invitation link is missing or invalid.</p>
+          <p style={{ fontSize: 13, color: 'var(--text-muted)' }}>Please contact your administrator.</p>
         </div>
       </div>
     );
@@ -40,29 +46,42 @@ export default function AcceptInvitePage() {
 
   if (done) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center px-4">
-        <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center">
-          <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
-            <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+      <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+        <div className="login-card animate-fadeIn" style={{ width: '100%', maxWidth: 420, padding: '40px 36px', textAlign: 'center' }}>
+          <div style={{ width: 56, height: 56, borderRadius: 16, background: '#D1FAE5', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+            <svg width="26" height="26" fill="none" stroke="#059669" strokeWidth="2.5" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h2 className="text-xl font-bold text-gray-800 mb-2">Account Activated!</h2>
-          <p className="text-gray-500 text-sm">Welcome aboard. Redirecting you to login...</p>
+          <h2 style={{ fontSize: 20, fontWeight: 700, color: 'var(--navy)', margin: '0 0 10px' }}>Account Activated!</h2>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)' }}>Welcome aboard. Redirecting you to sign in…</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 to-blue-900 flex items-center justify-center px-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8">
-        <div className="text-center mb-8">
-          <h1 className="text-2xl font-bold text-gray-800">Accept Invitation</h1>
-          <p className="text-gray-500 text-sm mt-1">Set your password to activate your account</p>
+    <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
+      <div className="login-card animate-fadeIn" style={{ width: '100%', maxWidth: 420, padding: '40px 36px' }}>
+        <div style={{ textAlign: 'center', marginBottom: 28 }}>
+          <div style={{
+            width: 52, height: 52, borderRadius: 14,
+            background: 'linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            margin: '0 auto 16px', boxShadow: '0 4px 16px rgba(13,148,136,0.35)',
+          }}>
+            <svg width="24" height="24" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
+            </svg>
+          </div>
+          <h1 style={{ fontSize: 20, fontWeight: 700, color: 'var(--navy)', margin: 0 }}>Accept Invitation</h1>
+          <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 6 }}>
+            Set your password to activate your account
+          </p>
         </div>
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-          <Input id="password" label="Password" type="password" placeholder="••••••••" required
+
+        <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+          <Input id="password" label="Password" type="password" placeholder="Min 8 chars, 1 uppercase, 1 number" required
             error={errors.password?.message}
             {...register('password', {
               required: 'Password is required',
@@ -75,7 +94,16 @@ export default function AcceptInvitePage() {
               required: 'Please confirm your password',
               validate: (v) => v === watch('password') || 'Passwords do not match',
             })} />
-          <Button type="submit" className="w-full" loading={isSubmitting}>Activate Account</Button>
+
+          <div style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 8, padding: '10px 14px', marginTop: 4 }}>
+            <p style={{ fontSize: 12.5, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
+              Your invitation link expires in <strong>24 hours</strong>. After activating you can sign in normally.
+            </p>
+          </div>
+
+          <Button type="submit" size="lg" loading={isSubmitting} style={{ width: '100%', justifyContent: 'center' }}>
+            Activate Account
+          </Button>
         </form>
       </div>
     </div>

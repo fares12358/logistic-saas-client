@@ -5,13 +5,22 @@ import { useForm } from 'react-hook-form';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
-import { agentsService } from '../../services/agents.service';
-import { AGENT_STATUS } from '../../utils/constants';
-import Input from '../../components/ui/Input';
-import Select from '../../components/ui/Select';
-import Button from '../../components/ui/Button';
-import LoadingSpinner from '../../components/ui/LoadingSpinner';
-import PageHeader from '../../components/ui/PageHeader';
+import { agentsService } from '@/services/agents.service';
+import { AGENT_STATUS } from '@/utils/constants';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import PageHeader from '@/components/ui/PageHeader';
+
+const SectionTitle = ({ children }) => (
+  <div style={{ marginBottom: 16 }}>
+    <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
+      {children}
+    </h3>
+    <div style={{ height: 1, background: 'var(--border)', marginTop: 8 }} />
+  </div>
+);
 
 export default function AgentForm({ id = null }) {
   const router = useRouter();
@@ -44,29 +53,25 @@ export default function AgentForm({ id = null }) {
 
   const mutation = useMutation({
     mutationFn: (data) => isEdit ? agentsService.update(id, data) : agentsService.create(data),
-    onSuccess: () => {
-      toast.success(isEdit ? 'Agent updated successfully' : 'Agent created successfully');
-      router.push('/agents');
-    },
-    onError: (e) => toast.error(e.response?.data?.message || 'Operation failed'),
+    onSuccess:  () => { toast.success(isEdit ? 'Agent updated' : 'Agent created'); router.push('/agents'); },
+    onError:    (e) => toast.error(e.response?.data?.message || 'Operation failed'),
   });
 
   if (isEdit && isLoading) return <LoadingSpinner fullPage />;
 
   return (
-    <div className="max-w-3xl">
+    <div className="animate-fadeIn" style={{ maxWidth: 780 }}>
       <PageHeader
         title={isEdit ? 'Edit Agent' : 'New Agent'}
-        subtitle={isEdit ? `Editing: ${agentData?.agentName || ''}` : 'Add a new agent to the system'}
-        action={<Button variant="secondary" onClick={() => router.push('/agents')}>← Back</Button>}
+        subtitle={isEdit ? `Editing: ${agentData?.agentName || '…'}` : 'Register a new shipping agent'}
+        action={<Button variant="secondary" onClick={() => router.push('/agents')}>← Back to Agents</Button>}
       />
 
-      <form onSubmit={handleSubmit(d => mutation.mutate(d))} className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 space-y-6">
-
+      <form onSubmit={handleSubmit(d => mutation.mutate(d))}>
         {/* Identity */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-100">Agent Identity</h3>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="card" style={{ padding: 28, marginBottom: 16 }}>
+          <SectionTitle>Agent Identity</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
             <Input id="agentCode" label="Agent Code" placeholder="e.g. AGT001" required
               error={errors.agentCode?.message}
               {...register('agentCode', { required: 'Agent code is required' })} />
@@ -77,41 +82,40 @@ export default function AgentForm({ id = null }) {
         </div>
 
         {/* Location */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-100">Location</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="card" style={{ padding: 28, marginBottom: 16 }}>
+          <SectionTitle>Location</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
             <Input id="country" label="Country" placeholder="e.g. Saudi Arabia" {...register('country')} />
             <Input id="city"    label="City"    placeholder="e.g. Jeddah"       {...register('city')} />
             <Input id="port"    label="Port"    placeholder="e.g. Jeddah Port"  {...register('port')} />
-            <div className="md:col-span-3">
-              <Input id="address" label="Full Address" placeholder="Street address..." {...register('address')} />
-            </div>
+          </div>
+          <div style={{ marginTop: 16 }}>
+            <Input id="address" label="Full Address" placeholder="Street address…" {...register('address')} />
           </div>
         </div>
 
         {/* Contact */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-100">Contact Information</h3>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <Input id="contactPerson" label="Contact Person" placeholder="e.g. Ahmed Hassan"
-              {...register('contactPerson')} />
-            <Input id="mobile" label="Mobile" placeholder="+966 5X XXX XXXX"
-              {...register('mobile')} />
-            <Input id="email" label="Email" type="email" placeholder="agent@company.com"
+        <div className="card" style={{ padding: 28, marginBottom: 16 }}>
+          <SectionTitle>Contact Information</SectionTitle>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
+            <Input id="contactPerson" label="Contact Person" placeholder="e.g. Ahmed Hassan" {...register('contactPerson')} />
+            <Input id="mobile"        label="Mobile"         placeholder="+966 5X XXX XXXX"  {...register('mobile')} />
+            <Input id="email"         label="Email"          type="email" placeholder="agent@company.com"
               error={errors.email?.message}
               {...register('email')} />
           </div>
         </div>
 
         {/* Status */}
-        <div>
-          <h3 className="text-sm font-semibold text-gray-700 mb-4 pb-2 border-b border-gray-100">Status</h3>
-          <Select id="status" label="Status" className="w-48"
+        <div className="card" style={{ padding: 28, marginBottom: 24 }}>
+          <SectionTitle>Status</SectionTitle>
+          <Select id="status" label="Status"
             options={AGENT_STATUS.map(s => ({ value: s, label: s }))}
+            style={{ maxWidth: 200 }}
             {...register('status')} />
         </div>
 
-        <div className="flex justify-end gap-3 pt-2 border-t border-gray-100">
+        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
           <Button type="button" variant="secondary" onClick={() => router.push('/agents')}>Cancel</Button>
           <Button type="submit" loading={isSubmitting || mutation.isPending}>
             {isEdit ? 'Save Changes' : 'Create Agent'}

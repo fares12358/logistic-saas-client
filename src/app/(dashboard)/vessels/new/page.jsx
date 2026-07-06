@@ -1,2 +1,2 @@
-import VesselForm from '../../../../modules/vessels/VesselForm';
+import VesselForm from '@/modules/vessels/VesselForm';
 export default function NewVesselPage() { return <VesselForm />; }

@@ -4,25 +4,24 @@ import { useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { usersService } from '../../services/users.service';
-import { rolesService } from '../../services/roles.service';
-import Input from '../../components/ui/Input';
-import Select from '../../components/ui/Select';
-import Button from '../../components/ui/Button';
+import { usersService } from '@/services/users.service';
+import { rolesService } from '@/services/roles.service';
+import Input from '@/components/ui/Input';
+import Select from '@/components/ui/Select';
+import Button from '@/components/ui/Button';
 
-// mode: 'create' | 'edit' | 'invite'
 export default function UserForm({ user = null, mode = 'create', onSuccess, onCancel }) {
   const isEdit   = mode === 'edit';
   const isInvite = mode === 'invite';
 
   const { data: rolesData } = useQuery({
     queryKey: ['roles-list'],
-    queryFn: () => rolesService.list().then(r => r.data.data),
+    queryFn:  () => rolesService.list().then(r => r.data.data),
   });
 
   const roleOptions = (rolesData || []).map(r => ({ value: r._id, label: r.name }));
 
-  const { register, handleSubmit, reset, formState: { errors, isSubmitting } } = useForm({
+  const { register, handleSubmit, reset, formState: { errors } } = useForm({
     defaultValues: isEdit && user ? {
       name:   user.name,
       email:  user.email,
@@ -51,9 +50,8 @@ export default function UserForm({ user = null, mode = 'create', onSuccess, onCa
   });
 
   return (
-    <form onSubmit={handleSubmit((d) => mutation.mutate(d))} className="space-y-4">
-
-      <Input id="name" label="Full Name" placeholder="John Smith" required
+    <form onSubmit={handleSubmit(d => mutation.mutate(d))} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+      <Input id="name" label="Full Name" placeholder="e.g. John Smith" required
         error={errors.name?.message}
         {...register('name', { required: 'Name is required' })} />
 
@@ -65,9 +63,9 @@ export default function UserForm({ user = null, mode = 'create', onSuccess, onCa
           pattern: { value: /\S+@\S+\.\S+/, message: 'Invalid email format' },
         })} />
 
-      {/* Password only for direct create (not invite, not edit) */}
       {mode === 'create' && (
-        <Input id="password" label="Password" type="password" placeholder="Min 8 chars, 1 uppercase, 1 number" required
+        <Input id="password" label="Password" type="password"
+          placeholder="Min 8 chars, 1 uppercase, 1 number" required
           error={errors.password?.message}
           {...register('password', {
             required: 'Password is required',
@@ -77,8 +75,7 @@ export default function UserForm({ user = null, mode = 'create', onSuccess, onCa
       )}
 
       <Select id="roleId" label="Role" required
-        options={roleOptions}
-        placeholder="Select a role..."
+        options={roleOptions} placeholder="Select a role…"
         error={errors.roleId?.message}
         {...register('roleId', { required: 'Role is required' })} />
 
@@ -89,17 +86,20 @@ export default function UserForm({ user = null, mode = 'create', onSuccess, onCa
       )}
 
       {isInvite && (
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-700">
+        <div style={{
+          background: 'var(--teal-light)', border: '1px solid var(--teal)',
+          borderRadius: 8, padding: '10px 14px',
+        }}>
+          <p style={{ fontSize: 12.5, color: 'var(--teal-dark)', margin: 0, lineHeight: 1.6 }}>
             An invitation email will be sent to this address. The link expires in <strong>24 hours</strong>.
             The user will set their own password.
           </p>
         </div>
       )}
 
-      <div className="flex justify-end gap-3 pt-2">
+      <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, paddingTop: 8, borderTop: '1px solid var(--border)' }}>
         <Button type="button" variant="secondary" onClick={onCancel}>Cancel</Button>
-        <Button type="submit" loading={isSubmitting || mutation.isPending}>
+        <Button type="submit" loading={mutation.isPending}>
           {isEdit ? 'Save Changes' : isInvite ? 'Send Invitation' : 'Create User'}
         </Button>
       </div>
