@@ -1,110 +1,455 @@
 'use client';
 
+import { useEffect, useRef } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import { useRouter } from 'next/navigation';
+import { Chart, registerables } from 'chart.js';
+import { dashboardService } from '@/services/dashboard.service';
 import { useAuth } from '@/context/AuthContext';
 
-const STAT_CARDS = [
-  { label: 'Active Vessels',   value: '—', accent: 'var(--teal)',   bg: 'var(--teal-light)' },
-  { label: 'Active Rounds',    value: '—', accent: '#6366F1',       bg: '#EEF2FF' },
-  { label: 'Total Bookings',   value: '—', accent: 'var(--amber)',  bg: '#FEF3C7' },
-  { label: 'Pending Invoices', value: '—', accent: '#EC4899',       bg: '#FCE7F3' },
-];
+// ── React Icons ───────────────────────────────────────────────────────────────
+import { GiCargoShip }           from 'react-icons/gi';
+import { TbClockPlay }            from 'react-icons/tb';
+import { FaClipboardList }        from 'react-icons/fa';
+import { FaMoneyBillWave }        from 'react-icons/fa';
+import { MdSchedule }             from 'react-icons/md';
+import { MdOutlineSailing }       from 'react-icons/md';
+import { FaFileInvoiceDollar }    from 'react-icons/fa';
+import { MdWarning }              from 'react-icons/md';
+import { MdPersonOutline }        from 'react-icons/md';
+import { MdAnchor }               from 'react-icons/md';
 
-const QUICK_START = [
-  { step: '01', text: 'Add Vessels & Agents',                href: '/vessels',  link: 'Go to Vessels' },
-  { step: '02', text: 'Set up Locations (Country → Port)',   href: '/locations', link: 'Go to Locations' },
-  { step: '03', text: 'Create a Service with a Route',       href: '/services',  link: 'Go to Services' },
-  { step: '04', text: 'Open a Round — voyages auto-generate',href: '/rounds',    link: 'Go to Rounds' },
-  { step: '05', text: 'Add Bookings to voyages',             href: '/bookings',  link: 'Go to Bookings' },
-];
+Chart.register(...registerables);
 
-export default function DashboardPage() {
-  const { user } = useAuth();
+// ── Helpers ───────────────────────────────────────────────────────────────────
+const fmtMoney = (n) => n != null
+  ? `$${Number(n).toLocaleString('en-US', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}`
+  : '$0';
+
+const fmtNum = (n) => (n ?? 0).toLocaleString();
+
+const relativeTime = (ts) => {
+  const diff = (Date.now() - new Date(ts).getTime()) / 1000;
+  if (diff < 60)    return 'just now';
+  if (diff < 3600)  return `${Math.floor(diff / 60)}m ago`;
+  if (diff < 86400) return `${Math.floor(diff / 3600)}h ago`;
+  return `${Math.floor(diff / 86400)}d ago`;
+};
+
+const ACTION_STYLES = {
+  CREATE: { bg: '#D1FAE5', color: '#065F46', label: 'Created' },
+  UPDATE: { bg: '#DBEAFE', color: '#1E40AF', label: 'Updated' },
+  DELETE: { bg: '#FEE2E2', color: '#991B1B', label: 'Deleted' },
+  LOGIN:  { bg: '#F3F4F6', color: '#374151', label: 'Login'   },
+  LOGOUT: { bg: '#F3F4F6', color: '#374151', label: 'Logout'  },
+};
+
+const MODULE_ROUTES = {
+  services: '/services', rounds: '/rounds', voyages: '/voyages',
+  bookings: '/bookings', expenses: '/expenses', invoices: '/invoices',
+  vessels: '/vessels', agents: '/agents', users: '/users',
+};
+
+const PALETTE = ['#0D9488','#6366F1','#F59E0B','#EC4899','#10B981','#3B82F6','#8B5CF6'];
+
+const BOOKING_STATUS_COLORS = {
+  Confirmed: '#0D9488', Pending: '#F59E0B', Cancelled: '#F87171',
+};
+const VOYAGE_STATUS_COLORS = {
+  Scheduled: '#6366F1', Departed: '#F59E0B', 'In Transit': '#3B82F6',
+  Arrived: '#10B981', Completed: '#0D9488', Cancelled: '#F87171',
+};
+const INVOICE_STATUS_COLORS = {
+  Draft: '#9CA3AF', Issued: '#3B82F6', Paid: '#0D9488',
+  Overdue: '#F87171', Cancelled: '#EF4444',
+};
+
+// ── Chart: Monthly Trend (Line) ───────────────────────────────────────────────
+function MonthlyTrendChart({ data }) {
+  const ref     = useRef(null);
+  const chartRef= useRef(null);
+
+  useEffect(() => {
+    if (!ref.current || !data) return;
+    if (chartRef.current) chartRef.current.destroy();
+    chartRef.current = new Chart(ref.current, {
+      type: 'line',
+      data: {
+        labels: data.labels,
+        datasets: [
+          {
+            label:           'Freight Revenue ($)',
+            data:            data.freight,
+            borderColor:     '#0D9488',
+            backgroundColor: 'rgba(13,148,136,0.12)',
+            borderWidth:     2.5,
+            pointBackgroundColor: '#0D9488',
+            pointRadius:     4,
+            fill:            true,
+            tension:         0.4,
+            yAxisID:         'y',
+          },
+          {
+            label:           'Booking Count',
+            data:            data.counts,
+            borderColor:     '#6366F1',
+            backgroundColor: 'rgba(99,102,241,0.08)',
+            borderWidth:     2,
+            pointBackgroundColor: '#6366F1',
+            pointRadius:     3,
+            fill:            true,
+            tension:         0.4,
+            yAxisID:         'y1',
+          },
+        ],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { position: 'top', labels: { font: { size: 11 }, padding: 12 } },
+          tooltip: {
+            callbacks: {
+              label: ctx => ctx.datasetIndex === 0
+                ? ` Revenue: $${Number(ctx.raw).toLocaleString()}`
+                : ` Bookings: ${ctx.raw}`,
+            },
+          },
+        },
+        scales: {
+          y: {
+            type: 'linear', position: 'left', beginAtZero: true,
+            ticks: { callback: v => `$${(v/1000).toFixed(0)}k`, font: { size: 11 } },
+            grid: { color: '#F3F4F6' },
+          },
+          y1: {
+            type: 'linear', position: 'right', beginAtZero: true,
+            ticks: { font: { size: 11 } },
+            grid: { drawOnChartArea: false },
+          },
+          x: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+  }, [data]);
+
+  return <canvas ref={ref} style={{ height: 240 }} />;
+}
+
+// ── Chart: Revenue by Service (Horizontal Bar) ────────────────────────────────
+function RevenueBarChart({ data }) {
+  const ref     = useRef(null);
+  const chartRef= useRef(null);
+
+  useEffect(() => {
+    if (!ref.current || !data?.length) return;
+    if (chartRef.current) chartRef.current.destroy();
+    chartRef.current = new Chart(ref.current, {
+      type: 'bar',
+      data: {
+        labels:   data.map(r => r.label),
+        datasets: [{
+          label:           'Revenue',
+          data:            data.map(r => r.value),
+          backgroundColor: data.map((_, i) => PALETTE[i % PALETTE.length]),
+          borderRadius:    5,
+          borderSkipped:   false,
+        }],
+      },
+      options: {
+        indexAxis: 'y',
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          tooltip: { callbacks: { label: ctx => ` $${Number(ctx.raw).toLocaleString()}` } },
+        },
+        scales: {
+          x: {
+            beginAtZero: true,
+            ticks: { callback: v => `$${(v/1000).toFixed(0)}k`, font: { size: 11 } },
+            grid: { color: '#F3F4F6' },
+          },
+          y: { ticks: { font: { size: 11 } }, grid: { display: false } },
+        },
+      },
+    });
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+  }, [data]);
+
+  return <canvas ref={ref} style={{ height: 220 }} />;
+}
+
+// ── Chart: Doughnut (generic) ─────────────────────────────────────────────────
+function DoughnutChart({ items = [], colorMap = {}, title }) {
+  const ref     = useRef(null);
+  const chartRef= useRef(null);
+
+  useEffect(() => {
+    if (!ref.current || !items.length) return;
+    if (chartRef.current) chartRef.current.destroy();
+    chartRef.current = new Chart(ref.current, {
+      type: 'doughnut',
+      data: {
+        labels:   items.map(i => i.label),
+        datasets: [{
+          data:            items.map(i => i.count),
+          backgroundColor: items.map(i => colorMap[i.label] || PALETTE[Math.floor(Math.random() * PALETTE.length)]),
+          borderWidth:     2,
+          borderColor:     '#fff',
+          hoverOffset:     6,
+        }],
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+          legend: { position: 'bottom', labels: { font: { size: 10 }, padding: 8 } },
+          tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw}` } },
+        },
+      },
+    });
+    return () => { if (chartRef.current) { chartRef.current.destroy(); chartRef.current = null; } };
+  }, [items]);
 
   return (
-    <div className="animate-fadeIn">
-      {/* Welcome */}
-      <div style={{ marginBottom: 28 }}>
-        <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--text-primary)', letterSpacing: '-0.3px', margin: 0 }}>
-          Good day, {user?.name?.split(' ')[0] || 'there'} 👋
-        </h1>
-        <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 4 }}>
-          Here's an overview of your shipping operations.
-        </p>
+    <div className="flex flex-col h-full">
+      {title && <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-3">{title}</p>}
+      <div style={{ position: 'relative', height: 200 }}>
+        <canvas ref={ref} />
+      </div>
+    </div>
+  );
+}
+
+// ── KPI Card ──────────────────────────────────────────────────────────────────
+function KpiCard({ icon: Icon, label, value, sub, iconBg, iconColor, loading }) {
+  return (
+    <div className="card p-4 flex items-center gap-4">
+      <div className={`w-11 h-11 rounded-xl flex items-center justify-center flex-shrink-0 ${iconBg}`}>
+        <Icon className={`text-xl ${iconColor}`} />
+      </div>
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider truncate">{label}</p>
+        {loading ? (
+          <div className="h-6 w-16 bg-gray-100 rounded animate-pulse mt-1" />
+        ) : (
+          <p className="text-xl font-bold text-gray-800 leading-tight">{value}</p>
+        )}
+        {sub && <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>}
+      </div>
+    </div>
+  );
+}
+
+// ── Main Dashboard ────────────────────────────────────────────────────────────
+export default function DashboardPage() {
+  const { user }   = useAuth();
+  const router     = useRouter();
+  const greeting   = () => {
+    const h = new Date().getHours();
+    if (h < 12) return 'Good morning';
+    if (h < 17) return 'Good afternoon';
+    return 'Good evening';
+  };
+
+  const { data: statsRaw, isLoading } = useQuery({
+    queryKey: ['dashboard-stats'],
+    queryFn:  () => dashboardService.getStats().then(r => r.data.data),
+    refetchInterval: 5 * 60 * 1000, // refresh every 5 minutes
+  });
+
+  const kpis     = statsRaw?.kpis     || {};
+  const charts   = statsRaw?.charts   || {};
+  const activity = statsRaw?.recentActivity || [];
+
+  return (
+    <div className="animate-fadeIn flex flex-col gap-5">
+
+      {/* ── Welcome ───────────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
+        <div>
+          <h1 className="text-xl font-bold text-gray-800 tracking-tight">
+            {greeting()}, {user?.name?.split(' ')[0] || 'there'} 👋
+          </h1>
+          <p className="text-sm text-gray-400 mt-0.5">
+            {new Date().toLocaleDateString('en-GB', { weekday:'long', day:'2-digit', month:'long', year:'numeric' })}
+          </p>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-teal-700 bg-teal-50 border border-teal-200 px-3 py-1.5 rounded-full">
+            <MdAnchor className="w-3.5 h-3.5" />
+            {user?.roleId?.name || 'Operations'}
+          </span>
+        </div>
       </div>
 
-      {/* Stat cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 16, marginBottom: 28 }}>
-        {STAT_CARDS.map(({ label, value, accent, bg }) => (
-          <div key={label} className="stat-card">
-            <p className="stat-label">{label}</p>
-            <p className="stat-value" style={{ color: accent }}>{value}</p>
-            <div style={{ height: 3, background: bg, borderRadius: 99, marginTop: 14 }}>
-              <div style={{ width: '40%', height: '100%', background: accent, borderRadius: 99, opacity: 0.6 }} />
+      {/* ── KPI Row 1 ─────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard icon={GiCargoShip}        loading={isLoading} iconBg="bg-blue-50"   iconColor="text-blue-600"
+          label="Active Vessels"    value={fmtNum(kpis.activeVessels)}    sub={`${fmtNum(kpis.totalAgents)} active agents`} />
+        <KpiCard icon={TbClockPlay}         loading={isLoading} iconBg="bg-purple-50" iconColor="text-purple-600"
+          label="Active Rounds"     value={fmtNum(kpis.activeRounds)}     sub={`${fmtNum(kpis.plannedRounds)} planned`} />
+        <KpiCard icon={FaClipboardList}     loading={isLoading} iconBg="bg-teal-50"   iconColor="text-teal-600"
+          label="Confirmed Bookings" value={fmtNum(kpis.confirmedBookings)} sub={`${fmtNum(kpis.pendingBookings)} pending`} />
+        <KpiCard icon={FaMoneyBillWave}     loading={isLoading} iconBg="bg-green-50"  iconColor="text-green-600"
+          label="Revenue (30 days)" value={fmtMoney(kpis.revenue30d)}     sub="Confirmed bookings" />
+      </div>
+
+      {/* ── KPI Row 2 ─────────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <KpiCard icon={MdSchedule}          loading={isLoading} iconBg="bg-indigo-50" iconColor="text-indigo-600"
+          label="Planned Rounds"    value={fmtNum(kpis.plannedRounds)}    sub={`${fmtNum(kpis.completedRounds)} completed`} />
+        <KpiCard icon={MdOutlineSailing}    loading={isLoading} iconBg="bg-sky-50"    iconColor="text-sky-600"
+          label="Active Voyages"    value={fmtNum(kpis.activeVoyages)}    sub={`${fmtNum(kpis.totalVoyages)} total`} />
+        <KpiCard icon={FaFileInvoiceDollar} loading={isLoading} iconBg="bg-amber-50"  iconColor="text-amber-600"
+          label="Draft Invoices"    value={fmtNum(kpis.draftInvoices)}    sub={`${fmtNum(kpis.paidInvoices)} paid`} />
+        <KpiCard icon={MdWarning}           loading={isLoading} iconBg="bg-red-50"    iconColor="text-red-600"
+          label="Overdue Invoices"  value={fmtNum(kpis.overdueInvoices)}  sub="Needs attention" />
+      </div>
+
+      {/* ── Charts Row 1 ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+
+        {/* Monthly trend — 2 cols */}
+        <div className="lg:col-span-2 card p-5">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Booking Trend — Last 6 Months</p>
+          </div>
+          {isLoading ? (
+            <div className="h-56 bg-gray-50 rounded-xl animate-pulse" />
+          ) : (
+            <div style={{ position: 'relative', height: 240 }}>
+              <MonthlyTrendChart data={charts.monthlyTrend} />
             </div>
-          </div>
-        ))}
+          )}
+        </div>
+
+        {/* Bookings by status doughnut — 1 col */}
+        <div className="card p-5">
+          {isLoading ? (
+            <div className="h-56 bg-gray-50 rounded-xl animate-pulse" />
+          ) : (
+            <DoughnutChart
+              items={charts.bookingsByStatus || []}
+              colorMap={BOOKING_STATUS_COLORS}
+              title="Bookings by Status"
+            />
+          )}
+        </div>
       </div>
 
-      {/* Bottom row */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      {/* ── Charts Row 2 ─────────────────────────────────────────────────── */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
 
-        {/* Quick start */}
-        <div className="card" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px' }}>
-            Quick Start Guide
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {QUICK_START.map(({ step, text, href, link }) => (
-              <div key={step} style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                <span style={{
-                  fontSize: 10, fontWeight: 700, color: 'var(--teal)',
-                  background: 'var(--teal-light)', borderRadius: 6,
-                  padding: '2px 7px', flexShrink: 0, letterSpacing: '0.04em',
-                }}>
-                  {step}
-                </span>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)', flex: 1 }}>{text}</span>
-                <a href={href} style={{
-                  fontSize: 12, color: 'var(--teal)', fontWeight: 500,
-                  textDecoration: 'none', whiteSpace: 'nowrap', flexShrink: 0,
-                }}>
-                  {link} →
-                </a>
-              </div>
-            ))}
-          </div>
+        {/* Revenue by service — 2 cols */}
+        <div className="lg:col-span-2 card p-5">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">Revenue by Service</p>
+          {isLoading ? (
+            <div className="h-52 bg-gray-50 rounded-xl animate-pulse" />
+          ) : !charts.revByService?.length ? (
+            <div className="flex items-center justify-center h-40 text-gray-300 text-sm">No revenue data yet</div>
+          ) : (
+            <div style={{ position: 'relative', height: 220 }}>
+              <RevenueBarChart data={charts.revByService} />
+            </div>
+          )}
         </div>
 
-        {/* System info */}
-        <div className="card" style={{ padding: 24 }}>
-          <h3 style={{ fontSize: 14, fontWeight: 600, color: 'var(--text-primary)', margin: '0 0 16px' }}>
-            System Status
-          </h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {[
-              { label: 'API Server',   status: 'Operational', ok: true },
-              { label: 'Database',     status: 'Connected',   ok: true },
-              { label: 'Email (SMTP)', status: 'Ready',       ok: true },
-            ].map(({ label, status, ok }) => (
-              <div key={label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <span style={{ fontSize: 13, color: 'var(--text-secondary)' }}>{label}</span>
-                <span style={{
-                  fontSize: 11.5, fontWeight: 500,
-                  color: ok ? '#065F46' : '#991B1B',
-                  background: ok ? '#D1FAE5' : '#FEE2E2',
-                  padding: '2px 9px', borderRadius: 99,
-                }}>
-                  {status}
-                </span>
-              </div>
-            ))}
+        {/* Voyage status + Invoice status — stacked 1 col */}
+        <div className="flex flex-col gap-4">
+          <div className="card p-5 flex-1">
+            {isLoading ? (
+              <div className="h-40 bg-gray-50 rounded-xl animate-pulse" />
+            ) : (
+              <DoughnutChart
+                items={charts.voyagesByStatus || []}
+                colorMap={VOYAGE_STATUS_COLORS}
+                title="Voyage Status"
+              />
+            )}
           </div>
-          <div style={{ marginTop: 20, padding: 12, background: 'var(--surface)', borderRadius: 8, border: '1px solid var(--border)' }}>
-            <p style={{ fontSize: 12, color: 'var(--text-muted)', margin: 0, lineHeight: 1.6 }}>
-              Dashboard KPIs will populate with live data as operations are created.
-            </p>
+          <div className="card p-5 flex-1">
+            {isLoading ? (
+              <div className="h-40 bg-gray-50 rounded-xl animate-pulse" />
+            ) : (
+              <DoughnutChart
+                items={charts.invoicesByStatus || []}
+                colorMap={INVOICE_STATUS_COLORS}
+                title="Invoice Status"
+              />
+            )}
           </div>
         </div>
+      </div>
+
+      {/* ── Recent Activity ───────────────────────────────────────────────── */}
+      <div className="card p-5">
+        <div className="flex items-center justify-between mb-4">
+          <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest">Recent Activity</p>
+          <button
+            onClick={() => router.push('/audit-logs')}
+            className="text-xs text-teal-600 font-semibold hover:text-teal-800 transition"
+          >
+            View all →
+          </button>
+        </div>
+
+        {isLoading ? (
+          <div className="flex flex-col gap-3">
+            {[1,2,3,4,5].map(i => (
+              <div key={i} className="h-10 bg-gray-50 rounded-lg animate-pulse" />
+            ))}
+          </div>
+        ) : activity.length === 0 ? (
+          <div className="flex items-center justify-center py-10 text-gray-300 text-sm">
+            No activity recorded yet
+          </div>
+        ) : (
+          <div className="flex flex-col divide-y divide-gray-50">
+            {activity.map(a => {
+              const style    = ACTION_STYLES[a.action] || ACTION_STYLES.CREATE;
+              const canClick = MODULE_ROUTES[a.module] && a.recordId && a.action !== 'DELETE';
+              return (
+                <div
+                  key={a._id}
+                  onClick={() => canClick && router.push(`/audit-logs/${a._id}`)}
+                  className={`flex items-center gap-3 py-2.5 ${canClick ? 'cursor-pointer hover:bg-gray-50 -mx-2 px-2 rounded-lg transition' : ''}`}
+                >
+                  {/* Action badge */}
+                  <span
+                    className="flex-shrink-0 text-[10px] font-bold px-2 py-0.5 rounded-full"
+                    style={{ background: style.bg, color: style.color }}
+                  >
+                    {style.label}
+                  </span>
+
+                  {/* Module + record */}
+                  <div className="flex-1 min-w-0">
+                    <span className="text-xs font-medium text-gray-700 capitalize">{a.module}</span>
+                    {a.recordNumber && (
+                      <span className="mono text-xs text-teal-600 ml-1.5 font-semibold">{a.recordNumber}</span>
+                    )}
+                  </div>
+
+                  {/* User */}
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    <MdPersonOutline className="w-3.5 h-3.5 text-gray-400" />
+                    <span className="text-xs text-gray-400 max-w-[100px] truncate">{a.user}</span>
+                  </div>
+
+                  {/* Time */}
+                  <span className="text-[10px] text-gray-300 flex-shrink-0 w-14 text-right">
+                    {relativeTime(a.timestamp)}
+                  </span>
+                </div>
+              );
+            })}
+          </div>
+        )}
       </div>
     </div>
   );

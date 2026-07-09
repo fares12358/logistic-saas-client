@@ -3,8 +3,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import toast from 'react-hot-toast';
-import { routesService } from '@/services/routes.service';
+import { routesService }    from '@/services/routes.service';
 import { locationsService } from '@/services/locations.service';
+import { agentsService }    from '@/services/agents.service';
 
 // ─── Empty leg factory ────────────────────────────────────────────────────────
 const emptyLeg = () => ({
@@ -13,10 +14,14 @@ const emptyLeg = () => ({
   cityId:     '',
   portId:     '',
   terminalId: '',
+  agentId:    '',
 });
 
+// ─── Shared select class ──────────────────────────────────────────────────────
+const sc = 'w-full text-[13px] border border-gray-200 rounded-md px-3 py-2 bg-white text-gray-800 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed';
+
 // ─── Single leg row ───────────────────────────────────────────────────────────
-function LegRow({ leg, index, total, onChange, onRemove, disabled }) {
+function LegRow({ leg, index, total, onChange, onRemove, disabled, agents }) {
   const { data: countries } = useQuery({
     queryKey: ['loc', 'countries'],
     queryFn:  () => locationsService.getCountries().then(r => r.data.data),
@@ -38,30 +43,29 @@ function LegRow({ leg, index, total, onChange, onRemove, disabled }) {
     enabled:  !!leg.portId,
   });
 
-  const update = (field, val) => onChange(index, { ...leg, [field]: val });
-
+  const update       = (field, val) => onChange(index, { ...leg, [field]: val });
   const handleCountry = (e) => onChange(index, { ...leg, countryId: e.target.value, cityId: '', portId: '', terminalId: '' });
   const handleCity    = (e) => onChange(index, { ...leg, cityId: e.target.value, portId: '', terminalId: '' });
   const handlePort    = (e) => onChange(index, { ...leg, portId: e.target.value, terminalId: '' });
-
-  const selectCls = 'w-full text-[13px] border border-gray-200 rounded-md px-3 py-2 bg-white text-gray-800 focus:outline-none focus:border-teal-500 focus:ring-2 focus:ring-teal-500/10 transition disabled:opacity-50 disabled:cursor-not-allowed';
 
   return (
     <div className="relative flex gap-3 items-start bg-white border border-gray-200 rounded-xl p-4 hover:border-teal-300 hover:shadow-sm transition-all group">
 
       {/* Sequence badge */}
       <div className="flex-shrink-0 w-7 h-7 rounded-full bg-teal-50 border border-teal-200 flex items-center justify-center mt-0.5">
-        <span className="text-[11px] font-700 text-teal-700 font-bold">{index + 1}</span>
+        <span className="text-[11px] font-bold text-teal-700">{index + 1}</span>
       </div>
 
-      {/* Fields grid */}
-      <div className="flex-1 grid grid-cols-2 gap-3 lg:grid-cols-4">
+      {/* Fields grid — 5 columns on large screens */}
+      <div className="flex-1 grid grid-cols-2 gap-3 lg:grid-cols-5">
 
         {/* Country */}
         <div>
-          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Country *</label>
-          <select value={leg.countryId} onChange={handleCountry} disabled={disabled} className={selectCls}>
-            <option value="">Select country…</option>
+          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Country <span className="text-red-400">*</span>
+          </label>
+          <select value={leg.countryId} onChange={handleCountry} disabled={disabled} className={sc}>
+            <option value="">Country…</option>
             {(countries || []).map(c => (
               <option key={c._id} value={c._id}>{c.name} ({c.code})</option>
             ))}
@@ -70,9 +74,11 @@ function LegRow({ leg, index, total, onChange, onRemove, disabled }) {
 
         {/* City */}
         <div>
-          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">City *</label>
-          <select value={leg.cityId} onChange={handleCity} disabled={disabled || !leg.countryId} className={selectCls}>
-            <option value="">Select city…</option>
+          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            City <span className="text-red-400">*</span>
+          </label>
+          <select value={leg.cityId} onChange={handleCity} disabled={disabled || !leg.countryId} className={sc}>
+            <option value="">City…</option>
             {(cities || []).map(c => (
               <option key={c._id} value={c._id}>{c.name}</option>
             ))}
@@ -81,9 +87,11 @@ function LegRow({ leg, index, total, onChange, onRemove, disabled }) {
 
         {/* Port */}
         <div>
-          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">Port *</label>
-          <select value={leg.portId} onChange={handlePort} disabled={disabled || !leg.cityId} className={selectCls}>
-            <option value="">Select port…</option>
+          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Port <span className="text-red-400">*</span>
+          </label>
+          <select value={leg.portId} onChange={handlePort} disabled={disabled || !leg.cityId} className={sc}>
+            <option value="">Port…</option>
             {(ports || []).map(p => (
               <option key={p._id} value={p._id}>{p.name}</option>
             ))}
@@ -93,17 +101,39 @@ function LegRow({ leg, index, total, onChange, onRemove, disabled }) {
         {/* Terminal */}
         <div>
           <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
-            Terminal <span className="text-gray-300 font-normal">(optional)</span>
+            Terminal
+            <span className="text-gray-300 ml-1 font-normal">(opt)</span>
           </label>
           <select
             value={leg.terminalId}
             onChange={e => update('terminalId', e.target.value)}
             disabled={disabled || !leg.portId}
-            className={selectCls}
+            className={sc}
           >
             <option value="">No terminal</option>
             {(terminals || []).map(t => (
               <option key={t._id} value={t._id}>{t.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Agent */}
+        <div>
+          <label className="block text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">
+            Agent
+            <span className="text-gray-300 ml-1 font-normal">(opt)</span>
+          </label>
+          <select
+            value={leg.agentId}
+            onChange={e => update('agentId', e.target.value)}
+            disabled={disabled}
+            className={sc}
+          >
+            <option value="">No agent</option>
+            {(agents || []).map(a => (
+              <option key={a._id} value={a._id}>
+                {a.agentCode ? `${a.agentCode} — ` : ''}{a.agentName}
+              </option>
             ))}
           </select>
         </div>
@@ -123,7 +153,7 @@ function LegRow({ leg, index, total, onChange, onRemove, disabled }) {
         </button>
       )}
 
-      {/* Connector line (not last) */}
+      {/* Connector line */}
       {index < total - 1 && (
         <div className="absolute left-[26px] -bottom-3 w-px h-3 bg-teal-200" />
       )}
@@ -134,9 +164,16 @@ function LegRow({ leg, index, total, onChange, onRemove, disabled }) {
 // ─── Main RouteEditor ─────────────────────────────────────────────────────────
 export default function RouteEditor({ serviceId, serviceName, serviceCode }) {
   const qc = useQueryClient();
-  const [legs, setLegs] = useState([emptyLeg(), emptyLeg()]);
-  const [loaded, setLoaded] = useState(false);
+  const [legs,     setLegs]     = useState([emptyLeg(), emptyLeg()]);
   const [blockMsg, setBlockMsg] = useState('');
+
+  // Active agents for all leg rows (shared query)
+  const { data: agentsData } = useQuery({
+    queryKey: ['agents-active-dropdown'],
+    queryFn:  () => agentsService.list({ limit: 200, status: 'Active' }).then(r => r.data.data),
+    staleTime: 5 * 60 * 1000,
+  });
+  const agents = agentsData || [];
 
   // Load existing route
   const { isLoading } = useQuery({
@@ -146,19 +183,18 @@ export default function RouteEditor({ serviceId, serviceName, serviceCode }) {
       if (data.legs && data.legs.length >= 2) {
         setLegs(data.legs.map(l => ({
           _key:       l._id,
-          countryId:  l.countryId?._id || l.countryId || '',
-          cityId:     l.cityId?._id    || l.cityId    || '',
-          portId:     l.portId?._id    || l.portId    || '',
+          countryId:  l.countryId?._id  || l.countryId  || '',
+          cityId:     l.cityId?._id     || l.cityId     || '',
+          portId:     l.portId?._id     || l.portId     || '',
           terminalId: l.terminalId?._id || l.terminalId || '',
+          agentId:    l.agentId?._id    || l.agentId    || '',
         })));
       }
-      setLoaded(true);
     },
-    onError: () => setLoaded(true),
   });
 
   const saveMutation = useMutation({
-    mutationFn: (legsPayload) => routesService.saveRoute(serviceId, legsPayload),
+    mutationFn: (payload) => routesService.saveRoute(serviceId, payload),
     onSuccess: () => {
       toast.success('Route saved successfully');
       qc.invalidateQueries(['route', serviceId]);
@@ -171,47 +207,40 @@ export default function RouteEditor({ serviceId, serviceName, serviceCode }) {
     },
   });
 
-  const handleChange  = useCallback((idx, updated) => {
+  const handleChange = useCallback((idx, updated) => {
     setLegs(prev => prev.map((l, i) => i === idx ? updated : l));
     setBlockMsg('');
   }, []);
 
-  const handleRemove  = (idx) => setLegs(prev => prev.filter((_, i) => i !== idx));
-  const handleAdd     = () => setLegs(prev => [...prev, emptyLeg()]);
+  const handleRemove = (idx) => setLegs(prev => prev.filter((_, i) => i !== idx));
+  const handleAdd    = () => setLegs(prev => [...prev, emptyLeg()]);
 
   const handleSave = () => {
-    // Validate
     for (let i = 0; i < legs.length; i++) {
-      const l = legs[i];
-      if (!l.countryId || !l.cityId || !l.portId) {
+      if (!legs[i].countryId || !legs[i].cityId || !legs[i].portId) {
         toast.error(`Leg ${i + 1}: country, city and port are required`);
         return;
       }
     }
-    if (legs.length < 2) {
-      toast.error('Route must have at least 2 legs');
-      return;
-    }
+    if (legs.length < 2) { toast.error('Route must have at least 2 legs'); return; }
 
-    const payload = legs.map(l => ({
+    saveMutation.mutate(legs.map(l => ({
       countryId:  l.countryId,
       cityId:     l.cityId,
       portId:     l.portId,
       terminalId: l.terminalId || null,
-    }));
-    saveMutation.mutate(payload);
+      agentId:    l.agentId    || null,
+    })));
   };
 
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center py-16">
-        <div className="flex items-center gap-3 text-gray-400">
-          <svg className="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
-            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
-            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
-          </svg>
-          <span className="text-sm">Loading route…</span>
-        </div>
+      <div className="flex items-center justify-center py-16 text-gray-400">
+        <svg className="animate-spin w-5 h-5 mr-2" fill="none" viewBox="0 0 24 24">
+          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"/>
+          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"/>
+        </svg>
+        <span className="text-sm">Loading route…</span>
       </div>
     );
   }
@@ -230,18 +259,16 @@ export default function RouteEditor({ serviceId, serviceName, serviceCode }) {
           </div>
           <h2 className="text-base font-semibold text-gray-800">{serviceName}</h2>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
-            {legs.length} leg{legs.length !== 1 ? 's' : ''}
-          </span>
-        </div>
+        <span className="text-xs text-gray-400 bg-gray-100 px-2.5 py-1 rounded-full">
+          {legs.length} leg{legs.length !== 1 ? 's' : ''}
+        </span>
       </div>
 
       {/* Block warning */}
       {blockMsg && (
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 mb-5">
-          <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" strokeWidth="2"/>
+          <svg className="w-4 h-4 text-amber-500 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path strokeLinecap="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
           </svg>
           <p className="text-sm text-amber-700">{blockMsg}</p>
         </div>
@@ -268,11 +295,12 @@ export default function RouteEditor({ serviceId, serviceName, serviceCode }) {
             onChange={handleChange}
             onRemove={handleRemove}
             disabled={saveMutation.isPending}
+            agents={agents}
           />
         ))}
       </div>
 
-      {/* Add leg */}
+      {/* Add port call */}
       <button
         type="button"
         onClick={handleAdd}
@@ -288,15 +316,13 @@ export default function RouteEditor({ serviceId, serviceName, serviceCode }) {
       {/* Save */}
       <div className="flex items-center justify-between border-t border-gray-100 pt-4">
         <p className="text-xs text-gray-400">
-          {legs.length < 2
-            ? 'Add at least 2 port calls to save'
-            : `${legs.length} port calls — ready to save`}
+          {legs.length < 2 ? 'Add at least 2 port calls to save' : `${legs.length} port calls — ready to save`}
         </p>
         <button
           type="button"
           onClick={handleSave}
           disabled={saveMutation.isPending || legs.length < 2}
-          className="btn btn-primary btn-md gap-2"
+          className="btn btn-primary btn-md flex items-center gap-2"
         >
           {saveMutation.isPending ? (
             <>

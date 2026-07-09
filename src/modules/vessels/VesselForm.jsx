@@ -13,12 +13,14 @@ import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import PageHeader from '@/components/ui/PageHeader';
 
-const SectionTitle = ({ children }) => (
-  <div style={{ marginBottom: 16 }}>
-    <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: 0 }}>
-      {children}
-    </h3>
-    <div style={{ height: 1, background: 'var(--border)', marginTop: 8 }} />
+const lc = 'block text-[11px] font-semibold text-gray-400 uppercase tracking-wider mb-1.5';
+const ic = (err) => `w-full text-[13px] border rounded-lg px-3 py-2 bg-white text-gray-800 focus:outline-none focus:ring-2 transition ${err ? 'border-red-400 focus:ring-red-400/20' : 'border-gray-200 focus:border-teal-500 focus:ring-teal-500/10'}`;
+const ec = 'mt-1 text-[11px] text-red-500';
+
+const SectionCard = ({ title, children }) => (
+  <div className="card p-6 mb-4">
+    <p className="text-[11px] font-bold text-gray-400 uppercase tracking-widest mb-4">{title}</p>
+    {children}
   </div>
 );
 
@@ -38,20 +40,21 @@ export default function VesselForm({ id = null }) {
   useEffect(() => {
     if (isEdit && vesselData) {
       reset({
-        vesselCode:       vesselData.vesselCode,
-        vesselName:       vesselData.vesselName,
-        imoNumber:        vesselData.imoNumber        || '',
-        flag:             vesselData.flag              || '',
-        callSign:         vesselData.callSign          || '',
-        ownershipType:    vesselData.ownershipType,
-        ownerName:        vesselData.ownerName         || '',
-        charterStartDate: vesselData.charterStartDate  ? vesselData.charterStartDate.split('T')[0] : '',
-        charterEndDate:   vesselData.charterEndDate    ? vesselData.charterEndDate.split('T')[0]   : '',
-        teuCapacity:      vesselData.teuCapacity       ?? '',
-        dwt:              vesselData.dwt               ?? '',
-        builtYear:        vesselData.builtYear         ?? '',
-        status:           vesselData.status,
-        notes:            vesselData.notes             || '',
+        vesselCode:           vesselData.vesselCode,
+        vesselName:           vesselData.vesselName,
+        imoNumber:            vesselData.imoNumber            || '',
+        flag:                 vesselData.flag                  || '',
+        callSign:             vesselData.callSign              || '',
+        ownershipType:        vesselData.ownershipType,
+        ownerName:            vesselData.ownerName             || '',
+        ownershipDescription: vesselData.ownershipDescription  || '',
+        charterStartDate:     vesselData.charterStartDate ? vesselData.charterStartDate.split('T')[0] : '',
+        charterEndDate:       vesselData.charterEndDate   ? vesselData.charterEndDate.split('T')[0]   : '',
+        capacity:             vesselData.capacity  ?? '',
+        dwt:                  vesselData.dwt       ?? '',
+        builtYear:            vesselData.builtYear ?? '',
+        status:               vesselData.status,
+        notes:                vesselData.notes || '',
       });
     }
   }, [vesselData, isEdit]);
@@ -65,86 +68,148 @@ export default function VesselForm({ id = null }) {
   if (isEdit && isLoading) return <LoadingSpinner fullPage />;
 
   return (
-    <div className="animate-fadeIn" style={{ maxWidth: 780 }}>
+    <div className="animate-fadeIn max-w-3xl">
       <PageHeader
         title={isEdit ? 'Edit Vessel' : 'New Vessel'}
         subtitle={isEdit ? `Editing: ${vesselData?.vesselName || '…'}` : 'Register a vessel in your fleet'}
-        action={
-          <Button variant="secondary" onClick={() => router.push('/vessels')}>
-            ← Back to Vessels
-          </Button>
-        }
+        action={<Button variant="secondary" onClick={() => router.push('/vessels')}>← Back</Button>}
       />
 
       <form onSubmit={handleSubmit(d => mutation.mutate(d))}>
-        {/* Basic Info */}
-        <div className="card" style={{ padding: 28, marginBottom: 16 }}>
-          <SectionTitle>Basic Information</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <Input id="vesselCode" label="Vessel Code" placeholder="e.g. VSL001" required
-              error={errors.vesselCode?.message}
-              {...register('vesselCode', { required: 'Vessel code is required' })} />
-            <Input id="vesselName" label="Vessel Name" placeholder="e.g. MV Ocean Star" required
-              error={errors.vesselName?.message}
-              {...register('vesselName', { required: 'Vessel name is required' })} />
-            <Input id="imoNumber" label="IMO Number" placeholder="7-digit number (optional)"
-              error={errors.imoNumber?.message}
-              {...register('imoNumber')} />
-            <Input id="flag" label="Flag" placeholder="e.g. Panama" {...register('flag')} />
-            <Input id="callSign" label="Call Sign" placeholder="e.g. A8BC1" {...register('callSign')} />
-          </div>
-        </div>
 
-        {/* Ownership */}
-        <div className="card" style={{ padding: 28, marginBottom: 16 }}>
-          <SectionTitle>Ownership</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
-            <Select id="ownershipType" label="Ownership Type" required
-              options={OWNERSHIP_TYPES.map(o => ({ value: o, label: o }))}
-              error={errors.ownershipType?.message}
-              {...register('ownershipType', { required: 'Ownership type is required' })} />
-            <Input id="ownerName" label="Owner Name" placeholder="e.g. Star Shipping LLC" {...register('ownerName')} />
-            {ownershipType === 'Chartered' && (
-              <>
-                <Input id="charterStartDate" label="Charter Start Date" type="date" required
-                  error={errors.charterStartDate?.message}
-                  {...register('charterStartDate', { required: 'Required for chartered vessels' })} />
-                <Input id="charterEndDate" label="Charter End Date" type="date" required
-                  error={errors.charterEndDate?.message}
-                  {...register('charterEndDate', { required: 'Required for chartered vessels' })} />
-              </>
-            )}
-          </div>
-        </div>
-
-        {/* Specs */}
-        <div className="card" style={{ padding: 28, marginBottom: 16 }}>
-          <SectionTitle>Vessel Specifications</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 16 }}>
-            <Input id="teuCapacity" label="TEU Capacity" type="number" min="0" placeholder="e.g. 2500" {...register('teuCapacity')} />
-            <Input id="dwt" label="DWT (tonnes)" type="number" min="0" placeholder="e.g. 30000" {...register('dwt')} />
-            <Input id="builtYear" label="Built Year" type="number" min="1800" placeholder="e.g. 2010" {...register('builtYear')} />
-          </div>
-        </div>
-
-        {/* Status & Notes */}
-        <div className="card" style={{ padding: 28, marginBottom: 24 }}>
-          <SectionTitle>Status & Notes</SectionTitle>
-          <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: 16 }}>
-            <Select id="status" label="Status"
-              options={VESSEL_STATUS.map(s => ({ value: s, label: s }))}
-              {...register('status')} />
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-              <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--text-secondary)' }}>Notes</label>
-              <textarea rows={3} placeholder="Optional notes about this vessel…"
-                className="input-base" style={{ resize: 'vertical', fontFamily: 'inherit' }}
-                {...register('notes')} />
+        {/* ── Basic Information ────────────────────────────────────────── */}
+        <SectionCard title="Basic Information">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={lc}>Vessel Code <span className="text-red-400">*</span></label>
+              <input {...register('vesselCode', { required: 'Vessel code is required' })}
+                placeholder="e.g. MSL-JEBALI" className={ic(errors.vesselCode)} />
+              {errors.vesselCode && <p className={ec}>{errors.vesselCode.message}</p>}
+            </div>
+            <div>
+              <label className={lc}>Vessel Name <span className="text-red-400">*</span></label>
+              <input {...register('vesselName', { required: 'Vessel name is required' })}
+                placeholder="e.g. MSL Jebel Ali" className={ic(errors.vesselName)} />
+              {errors.vesselName && <p className={ec}>{errors.vesselName.message}</p>}
+            </div>
+            <div>
+              <label className={lc}>IMO Number <span className="text-red-400">*</span></label>
+              <input
+                {...register('imoNumber', {
+                  required: 'IMO number is required',
+                  pattern: { value: /^\d{7}$/, message: 'IMO must be exactly 7 digits' },
+                })}
+                placeholder="7-digit number (e.g. 9123456)"
+                maxLength={7}
+                className={ic(errors.imoNumber)}
+              />
+              {errors.imoNumber && <p className={ec}>{errors.imoNumber.message}</p>}
+            </div>
+            <div>
+              <label className={lc}>Flag</label>
+              <input {...register('flag')} placeholder="e.g. Panama" className={ic(false)} />
+            </div>
+            <div>
+              <label className={lc}>Call Sign</label>
+              <input {...register('callSign')} placeholder="e.g. HOPQ1" className={ic(false)} />
             </div>
           </div>
-        </div>
+        </SectionCard>
 
-        {/* Actions */}
-        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 10 }}>
+        {/* ── Ownership ────────────────────────────────────────────────── */}
+        <SectionCard title="Ownership">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={lc}>Ownership Type <span className="text-red-400">*</span></label>
+              <select
+                {...register('ownershipType', { required: 'Ownership type is required' })}
+                className={`${ic(errors.ownershipType)} cursor-pointer`}
+              >
+                <option value="">Select type…</option>
+                {OWNERSHIP_TYPES.map(o => <option key={o} value={o}>{o}</option>)}
+              </select>
+              {errors.ownershipType && <p className={ec}>{errors.ownershipType.message}</p>}
+            </div>
+            <div>
+              <label className={lc}>Owner Name</label>
+              <input {...register('ownerName')} placeholder="e.g. Maritime Solutions LLC" className={ic(false)} />
+            </div>
+
+            {ownershipType === 'Chartered' && (
+              <>
+                <div>
+                  <label className={lc}>Charter Start Date <span className="text-red-400">*</span></label>
+                  <input type="date"
+                    {...register('charterStartDate', { required: 'Required for chartered vessels' })}
+                    className={ic(errors.charterStartDate)} />
+                  {errors.charterStartDate && <p className={ec}>{errors.charterStartDate.message}</p>}
+                </div>
+                <div>
+                  <label className={lc}>Charter End Date <span className="text-red-400">*</span></label>
+                  <input type="date"
+                    {...register('charterEndDate', { required: 'Required for chartered vessels' })}
+                    className={ic(errors.charterEndDate)} />
+                  {errors.charterEndDate && <p className={ec}>{errors.charterEndDate.message}</p>}
+                </div>
+              </>
+            )}
+
+            <div className="sm:col-span-2">
+              <label className={lc}>Ownership Description</label>
+              <textarea
+                {...register('ownershipDescription')}
+                rows={2}
+                placeholder="Notes about this ownership arrangement, charter terms, lease conditions…"
+                className={`${ic(false)} resize-none`}
+              />
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* ── Specifications ───────────────────────────────────────────── */}
+        <SectionCard title="Vessel Specifications">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div>
+              <label className={lc}>Capacity (TEU)</label>
+              <input type="number" min="0"
+                {...register('capacity')}
+                placeholder="e.g. 14000" className={ic(false)} />
+            </div>
+            <div>
+              <label className={lc}>DWT (tonnes)</label>
+              <input type="number" min="0"
+                {...register('dwt')}
+                placeholder="e.g. 165000" className={ic(false)} />
+            </div>
+            <div>
+              <label className={lc}>Built Year</label>
+              <input type="number" min="1800"
+                {...register('builtYear')}
+                placeholder="e.g. 2015" className={ic(false)} />
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* ── Status & Notes ───────────────────────────────────────────── */}
+        <SectionCard title="Status & Notes">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <label className={lc}>Status</label>
+              <select {...register('status')} className={`${ic(false)} cursor-pointer`}>
+                {VESSEL_STATUS.map(s => <option key={s} value={s}>{s}</option>)}
+              </select>
+            </div>
+            <div>
+              <label className={lc}>Notes</label>
+              <textarea rows={3} placeholder="Optional notes…"
+                {...register('notes')}
+                className={`${ic(false)} resize-none`} />
+            </div>
+          </div>
+        </SectionCard>
+
+        {/* ── Actions ──────────────────────────────────────────────────── */}
+        <div className="flex justify-end gap-3 mt-2">
           <Button type="button" variant="secondary" onClick={() => router.push('/vessels')}>Cancel</Button>
           <Button type="submit" loading={isSubmitting || mutation.isPending}>
             {isEdit ? 'Save Changes' : 'Create Vessel'}

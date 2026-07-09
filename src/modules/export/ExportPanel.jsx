@@ -162,7 +162,8 @@ export default function ExportPanel() {
         toast.success(`ZIP downloaded — ${exports.length} modules`);
       }
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Export failed');
+      const msg = await exportService.readBlobError(e);
+      toast.error(msg);
     } finally {
       setLoading(false);
     }

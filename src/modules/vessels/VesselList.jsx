@@ -8,13 +8,13 @@ import { vesselsService } from '@/services/vessels.service';
 import { usePermission } from '@/context/PermissionContext';
 import { downloadFile } from '@/utils/exportHelper';
 import { VESSEL_STATUS } from '@/utils/constants';
-import PageHeader from '@/components/ui/PageHeader';
-import Button from '@/components/ui/Button';
-import Badge from '@/components/ui/Badge';
-import SearchBar from '@/components/ui/SearchBar';
-import Select from '@/components/ui/Select';
-import Pagination from '@/components/ui/Pagination';
-import EmptyState from '@/components/ui/EmptyState';
+import PageHeader    from '@/components/ui/PageHeader';
+import Button        from '@/components/ui/Button';
+import Badge         from '@/components/ui/Badge';
+import SearchBar     from '@/components/ui/SearchBar';
+import Select        from '@/components/ui/Select';
+import Pagination    from '@/components/ui/Pagination';
+import EmptyState    from '@/components/ui/EmptyState';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import ConfirmDialog from '@/components/ui/ConfirmDialog';
 
@@ -57,75 +57,92 @@ export default function VesselList() {
     finally { setExporting(false); }
   };
 
+  const sc = 'text-[13px] border border-gray-200 rounded-lg px-3 py-2 bg-white text-gray-700 focus:outline-none focus:border-teal-500 cursor-pointer';
+
   return (
     <div className="animate-fadeIn">
       <PageHeader
         title="Vessels"
         subtitle="Manage your fleet master data"
-        action={
-          <div style={{ display: 'flex', gap: 8 }}>
-            {can('vessels', 'create') && (
-              <Button onClick={() => router.push('/vessels/new')}>+ New Vessel</Button>
-            )}
-          </div>
-        }
+        action={can('vessels', 'create') && (
+          <Button onClick={() => router.push('/vessels/new')}>+ New Vessel</Button>
+        )}
       />
 
       {/* Toolbar */}
-      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 10, marginBottom: 16 }}>
-        <div style={{ flex: 1, minWidth: 220 }}>
+      <div className="flex flex-wrap items-center gap-2.5 mb-4">
+        <div className="flex-1 min-w-[220px]">
           <SearchBar value={search} onChange={v => { setSearch(v); setPage(1); setSelected([]); }} placeholder="Search code, name, IMO…" />
         </div>
         <Select value={status} onChange={e => { setStatus(e.target.value); setPage(1); setSelected([]); }}
           options={VESSEL_STATUS.map(s => ({ value: s, label: s }))} placeholder="All Statuses" style={{ width: 160 }} />
-        <div style={{ display: 'flex', gap: 6, marginLeft: 'auto' }}>
-          <Button variant="secondary" size="sm" onClick={() => handleExport('all')} loading={exporting}>
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24"><path strokeLinecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/></svg>
+        <div className="flex gap-2 ml-auto">
+          <button onClick={() => handleExport('all')} disabled={exporting}
+            className="btn btn-secondary btn-sm flex items-center gap-1.5">
+            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+              <path strokeLinecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+            </svg>
             Export
-          </Button>
+          </button>
           {selected.length > 0 && (
-            <Button variant="secondary" size="sm" onClick={() => handleExport('selected')} loading={exporting}>
+            <button onClick={() => handleExport('selected')} disabled={exporting}
+              className="btn btn-secondary btn-sm">
               Export {selected.length} selected
-            </Button>
+            </button>
           )}
         </div>
       </div>
 
       {/* Table */}
-      <div className="card" style={{ overflow: 'hidden' }}>
+      <div className="card overflow-hidden">
         {isLoading ? <LoadingSpinner fullPage /> : vessels.length === 0 ? <EmptyState title="No vessels found" /> : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse">
               <thead>
                 <tr className="table-header">
-                  <th style={{ width: 40, padding: '10px 16px' }}>
+                  <th className="w-10 px-4 py-2.5">
                     <input type="checkbox" checked={selected.length === vessels.length && vessels.length > 0}
-                      onChange={toggleAll} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--teal)' }} />
+                      onChange={toggleAll} className="w-3.5 h-3.5 cursor-pointer accent-teal-600" />
                   </th>
-                  {['Code', 'Name', 'IMO', 'Flag', 'Ownership', 'TEU', 'Status', 'Actions'].map(h => <th key={h}>{h}</th>)}
+                  {['Code', 'Name', 'IMO', 'Flag', 'Ownership', 'Capacity', 'Status', 'Actions'].map(h => (
+                    <th key={h}>{h}</th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {vessels.map(v => (
                   <tr key={v._id} className="table-row">
-                    <td style={{ padding: '11px 16px' }}>
+                    <td className="px-4">
                       <input type="checkbox" checked={selected.includes(v._id)} onChange={() => toggleSelect(v._id)}
-                        style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--teal)' }} />
+                        className="w-3.5 h-3.5 cursor-pointer accent-teal-600" />
                     </td>
-                    <td><span className="mono" style={{ color: 'var(--teal)', fontWeight: 600 }}>{v.vesselCode}</span></td>
-                    <td><span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{v.vesselName}</span></td>
-                    <td><span className="mono">{v.imoNumber || <span style={{ color: 'var(--text-muted)' }}>—</span>}</span></td>
-                    <td>{v.flag || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
-                    <td>{v.ownershipType}</td>
-                    <td><span className="mono">{v.teuCapacity?.toLocaleString() || <span style={{ color: 'var(--text-muted)' }}>—</span>}</span></td>
+                    <td><span className="mono text-xs font-bold text-teal-600">{v.vesselCode}</span></td>
+                    <td><span className="text-sm font-medium text-gray-800">{v.vesselName}</span></td>
+                    <td><span className="mono text-xs">{v.imoNumber || <span className="text-gray-300">—</span>}</span></td>
+                    <td className="text-sm text-gray-600">{v.flag || <span className="text-gray-300">—</span>}</td>
+                    <td>
+                      <span className="text-xs text-gray-600">{v.ownershipType}</span>
+                      {v.ownershipDescription && (
+                        <p className="text-[11px] text-gray-400 mt-0.5 truncate max-w-[140px]" title={v.ownershipDescription}>
+                          {v.ownershipDescription}
+                        </p>
+                      )}
+                    </td>
+                    <td>
+                      <span className="mono text-xs text-gray-600">
+                        {v.capacity != null ? v.capacity.toLocaleString() : <span className="text-gray-300">—</span>}
+                      </span>
+                    </td>
                     <td><Badge label={v.status} /></td>
                     <td>
-                      <div style={{ display: 'flex', gap: 12 }}>
+                      <div className="flex items-center gap-3">
                         {can('vessels', 'update') && (
-                          <button onClick={() => router.push(`/vessels/${v._id}`)} style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--teal)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Edit</button>
+                          <button onClick={() => router.push(`/vessels/${v._id}`)}
+                            className="text-xs font-medium text-teal-600 hover:text-teal-800 transition">Edit</button>
                         )}
                         {can('vessels', 'delete') && (
-                          <button onClick={() => setDeleteTarget(v)} style={{ fontSize: 12.5, fontWeight: 500, color: 'var(--red)', background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}>Delete</button>
+                          <button onClick={() => setDeleteTarget(v)}
+                            className="text-xs font-medium text-red-400 hover:text-red-600 transition">Delete</button>
                         )}
                       </div>
                     </td>
@@ -138,10 +155,10 @@ export default function VesselList() {
       </div>
 
       {pagination && pagination.total > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 16 }}>
-          <p style={{ fontSize: 12.5, color: 'var(--text-muted)' }}>
+        <div className="flex items-center justify-between mt-4">
+          <p className="text-xs text-gray-400">
             {pagination.total} vessel{pagination.total !== 1 ? 's' : ''} total
-            {selected.length > 0 && <span style={{ color: 'var(--teal)', fontWeight: 500 }}> · {selected.length} selected</span>}
+            {selected.length > 0 && <span className="text-teal-600 font-medium"> · {selected.length} selected</span>}
           </p>
           <Pagination page={pagination.page} totalPages={pagination.totalPages} onPageChange={setPage} />
         </div>
@@ -150,7 +167,7 @@ export default function VesselList() {
       <ConfirmDialog open={!!deleteTarget} onClose={() => setDeleteTarget(null)}
         onConfirm={() => deleteMutation.mutate(deleteTarget._id)} loading={deleteMutation.isPending}
         title="Delete Vessel"
-        message={`Delete "${deleteTarget?.vesselName}" (${deleteTarget?.vesselCode})? This action is permanent.`}
+        message={`Delete "${deleteTarget?.vesselName}" (${deleteTarget?.vesselCode})? This cannot be undone.`}
       />
     </div>
   );

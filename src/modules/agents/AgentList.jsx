@@ -100,7 +100,7 @@ export default function AgentList() {
                     <input type="checkbox" checked={selected.length === agents.length && agents.length > 0}
                       onChange={toggleAll} style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--teal)' }} />
                   </th>
-                  {['Code', 'Name', 'Country', 'City', 'Contact Person', 'Email', 'Status', 'Actions'].map(h => <th key={h}>{h}</th>)}
+                  {['Code', 'Name', 'Country', 'City', 'Primary Contact', 'Email', 'Status', 'Actions'].map(h => <th key={h}>{h}</th>)}
                 </tr>
               </thead>
               <tbody>
@@ -110,12 +110,12 @@ export default function AgentList() {
                       <input type="checkbox" checked={selected.includes(a._id)} onChange={() => toggleSelect(a._id)}
                         style={{ width: 15, height: 15, cursor: 'pointer', accentColor: 'var(--teal)' }} />
                     </td>
-                    <td><span className="mono" style={{ color: 'var(--teal)', fontWeight: 600 }}>{a.agentCode}</span></td>
+                    <td><span className="mono" style={{ color: 'var(--teal)', fontWeight: 600 }}>{a.agentCode || <span style={{ color: 'var(--text-muted)' }}>—</span>}</span></td>
                     <td><span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{a.agentName}</span></td>
                     <td>{a.country || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
                     <td>{a.city    || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
-                    <td>{a.contactPerson || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
-                    <td><span className="mono" style={{ fontSize: 12 }}>{a.email || <span style={{ color: 'var(--text-muted)' }}>—</span>}</span></td>
+                    <td>{a.contacts?.[0]?.contactPerson || <span style={{ color: 'var(--text-muted)' }}>—</span>}</td>
+                    <td><span className="mono" style={{ fontSize: 12 }}>{a.contacts?.[0]?.email || <span style={{ color: 'var(--text-muted)' }}>—</span>}</span></td>
                     <td><Badge label={a.status} /></td>
                     <td>
                       <div style={{ display: 'flex', gap: 12 }}>

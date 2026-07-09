@@ -36,7 +36,8 @@ export default function ExportButton({ module, filters = {}, selectedIds = [], o
       toast.success(`Exported ${res.headers?.['x-export-count'] ?? ''} rows`);
       if (mode === 'selected') onClear?.();
     } catch (e) {
-      toast.error(e.response?.data?.message || 'Export failed');
+      const msg = await exportService.readBlobError(e);
+      toast.error(msg);
     } finally {
       setLoading('');
     }
