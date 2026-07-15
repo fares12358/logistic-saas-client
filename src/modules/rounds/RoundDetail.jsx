@@ -164,18 +164,6 @@ export default function RoundDetailPage({ roundId }) {
 
       {/* Voyages section */}
       <div className="card overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-          <div>
-            <h2 className="text-sm font-semibold text-gray-700">Generated Voyages</h2>
-            <p className="text-xs text-gray-400 mt-0.5">Auto-generated from service route legs — one per consecutive port pair</p>
-          </div>
-          <div className="flex items-center gap-1.5 text-teal-600">
-            <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-              <path strokeLinecap="round" d="M13 10V3L4 14h7v7l9-11h-7z"/>
-            </svg>
-            <span className="text-xs font-semibold">{(round.voyageIds || []).length} voyage{(round.voyageIds || []).length !== 1 ? 's' : ''}</span>
-          </div>
-        </div>
         <RoundVoyageList roundId={roundId} round={round} />
       </div>
 

@@ -2,16 +2,15 @@
 import { use } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
+import PageGuard from '@/components/ui/PageGuard';
 import { invoicesService } from '@/services/invoices.service';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import PageHeader from '@/components/ui/PageHeader';
 import InvoiceForm from '@/modules/invoices/InvoiceForm';
 import Badge from '@/components/ui/Badge';
 
-export default function EditInvoicePage({ params }) {
-  const { id } = use(params);
+function EditInvoiceContent({ id }) {
   const router = useRouter();
-
   const { data: invoice, isLoading, isError } = useQuery({
     queryKey: ['invoice', id],
     queryFn: () => invoicesService.getById(id).then(r => r.data.data),
@@ -45,4 +44,9 @@ export default function EditInvoicePage({ params }) {
       <InvoiceForm item={invoice} />
     </div>
   );
+}
+
+export default function EditInvoicePage({ params }) {
+  const { id } = use(params);
+  return <PageGuard module="invoices"><EditInvoiceContent id={id} /></PageGuard>;
 }

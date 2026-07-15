@@ -82,7 +82,14 @@ export default function BookingList() {
         subtitle="Manage cargo bookings on voyages"
         action={
           can('bookings', 'create') && (
-            <Button onClick={() => setModal('create')}>+ New Booking</Button>
+            <div className="flex gap-2">
+              {can('bookings', 'import') && (
+                <Button variant="secondary" onClick={() => router.push('/bookings/import')}>
+                  ↑ Import
+                </Button>
+              )}
+              <Button onClick={() => setModal('create')}>+ New Booking</Button>
+            </div>
           )
         }
       />
@@ -203,7 +210,7 @@ export default function BookingList() {
                         >
                           View
                         </button>
-                        {can('bookings', 'update') && b.status !== 'Cancelled' && (
+                        {can('bookings', 'update') && b.status !== 'Cancelled' && b.status !== 'Final Loading' && (
                           <button
                             onClick={() => setModal({ edit: b })}
                             className="text-xs font-medium text-gray-500 hover:text-gray-800 transition"

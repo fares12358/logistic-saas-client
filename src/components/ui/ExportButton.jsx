@@ -4,9 +4,11 @@ import { useState, useRef, useEffect } from 'react';
 import toast from 'react-hot-toast';
 import { exportService } from '../../services/export.service';
 import { downloadFile, exportFilename } from '../../utils/exportHelper';
+import { usePermission } from '@/context/PermissionContext';
 
 /**
  * Reusable export dropdown button.
+ * Sprint019: hidden unless user has can('export','read') AND can(module,'export')
  *
  * Props:
  *   module       string           – module name matching backend COLUMNS key
@@ -15,9 +17,13 @@ import { downloadFile, exportFilename } from '../../utils/exportHelper';
  *   onClear      () => void       – clears selection after export
  */
 export default function ExportButton({ module, filters = {}, selectedIds = [], onClear }) {
+  const { can }     = usePermission();
   const [open,      setOpen]      = useState(false);
   const [loading,   setLoading]   = useState('');   // 'all' | 'selected' | ''
   const menuRef = useRef(null);
+
+  // Hide entirely if user lacks export permission
+  if (!can('export', 'read') || !can(module, 'export')) return null;
 
   // Close menu on outside click
   useEffect(() => {

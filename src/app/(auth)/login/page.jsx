@@ -18,11 +18,17 @@ export default function LoginPage() {
     if (!isLoading && isAuthenticated) router.replace('/dashboard');
   }, [isAuthenticated, isLoading]);
 
-  if (isLoading) return <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}><LoadingSpinner /></div>;
+  if (isLoading) return (
+    <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <LoadingSpinner />
+    </div>
+  );
 
   const onSubmit = async (data) => {
     try {
       await login(data.email, data.password);
+      // Layout will redirect non-SuperAdmin to their first permitted page.
+      // SuperAdmin lands on /dashboard directly.
       router.replace('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Invalid email or password.');
@@ -56,8 +62,10 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Input
-            id="email" label="Email address" type="email"
-            placeholder="you@company.com" required value='admin@logistics.com'
+            id="email"
+            label="Email address"
+            type="email"
+            placeholder="you@company.com"
             error={errors.email?.message}
             {...register('email', {
               required: 'Email is required',
@@ -67,22 +75,31 @@ export default function LoginPage() {
 
           <div>
             <Input
-              id="password" label="Password" type="password" value="Admin@123456"
-              placeholder="••••••••" required
+              id="password"
+              label="Password"
+              type="password"
+              placeholder="••••••••"
               error={errors.password?.message}
               {...register('password', { required: 'Password is required' })}
             />
             <div style={{ textAlign: 'right', marginTop: 6 }}>
-              <a href="/forgot-password" style={{ fontSize: 12.5, color: 'var(--teal)', textDecoration: 'none', fontWeight: 500 }}
+              <a
+                href="/forgot-password"
+                style={{ fontSize: 12.5, color: 'var(--teal)', textDecoration: 'none', fontWeight: 500 }}
                 onMouseEnter={e => e.currentTarget.style.textDecoration = 'underline'}
-                onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}>
+                onMouseLeave={e => e.currentTarget.style.textDecoration = 'none'}
+              >
                 Forgot password?
               </a>
             </div>
           </div>
 
-          <Button type="submit" size="lg" className="w-full" loading={isSubmitting}
-            style={{ marginTop: 8, width: '100%', justifyContent: 'center' }}>
+          <Button
+            type="submit"
+            size="lg"
+            loading={isSubmitting}
+            style={{ marginTop: 8, width: '100%', justifyContent: 'center' }}
+          >
             Sign in
           </Button>
         </form>

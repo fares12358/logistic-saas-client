@@ -9,4 +9,7 @@ export const bookingsService = {
   update:          (id, data)    => api.put(`${BASE}/${id}`, data),
   remove:          (id)          => api.delete(`${BASE}/${id}`),
   getVoyagePorts:  (voyageId)    => api.get(`${BASE}/voyage-ports/${voyageId}`),
+  // Import
+  importPreview:   (data)        => api.post(`${BASE}/import/preview`, data),
+  importSave:      (data)        => api.post(`${BASE}/import/save`, data),
 };

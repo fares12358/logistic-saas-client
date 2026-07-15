@@ -1,9 +1,10 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import PageHeader  from '@/components/ui/PageHeader';
+import PageGuard from '@/components/ui/PageGuard';
+import PageHeader from '@/components/ui/PageHeader';
 import ExpenseForm from '@/modules/expenses/ExpenseForm';
 
-export default function NewExpensePage() {
+function NewExpenseContent() {
   const router = useRouter();
   return (
     <div className="animate-fadeIn">
@@ -22,4 +23,8 @@ export default function NewExpensePage() {
       <ExpenseForm />
     </div>
   );
+}
+
+export default function NewExpensePage() {
+  return <PageGuard module="expenses" action="create"><NewExpenseContent /></PageGuard>;
 }

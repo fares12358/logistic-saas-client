@@ -6,6 +6,8 @@ import { useRouter } from 'next/navigation';
 import { Chart, registerables } from 'chart.js';
 import { dashboardService } from '@/services/dashboard.service';
 import { useAuth } from '@/context/AuthContext';
+import { usePermission } from '@/context/PermissionContext';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // ── React Icons ───────────────────────────────────────────────────────────────
 import { GiCargoShip }           from 'react-icons/gi';
@@ -247,20 +249,35 @@ function KpiCard({ icon: Icon, label, value, sub, iconBg, iconColor, loading }) 
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const { user }   = useAuth();
-  const router     = useRouter();
-  const greeting   = () => {
+  const { user }        = useAuth();
+  const { can, permissionsLoaded } = usePermission();
+  const router          = useRouter();
+  const isSuperAdmin    = user?.roleId?.isSystem === true;
+  const hasAccess       = isSuperAdmin || can('dashboard', 'read');
+
+  const greeting = () => {
     const h = new Date().getHours();
     if (h < 12) return 'Good morning';
     if (h < 17) return 'Good afternoon';
     return 'Good evening';
   };
 
+  // Block the stats query until we know the user has access
   const { data: statsRaw, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn:  () => dashboardService.getStats().then(r => r.data.data),
-    refetchInterval: 5 * 60 * 1000, // refresh every 5 minutes
+    refetchInterval: 5 * 60 * 1000,
+    enabled: hasAccess,   // never fires for non-SuperAdmin
   });
+
+  // While permissions are resolving, show spinner (layout is already redirecting)
+  if (!permissionsLoaded || (!hasAccess && !isSuperAdmin)) {
+    return (
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
+        <LoadingSpinner />
+      </div>
+    );
+  }
 
   const kpis     = statsRaw?.kpis     || {};
   const charts   = statsRaw?.charts   || {};

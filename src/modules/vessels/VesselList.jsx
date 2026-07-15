@@ -77,18 +77,22 @@ export default function VesselList() {
         <Select value={status} onChange={e => { setStatus(e.target.value); setPage(1); setSelected([]); }}
           options={VESSEL_STATUS.map(s => ({ value: s, label: s }))} placeholder="All Statuses" style={{ width: 160 }} />
         <div className="flex gap-2 ml-auto">
-          <button onClick={() => handleExport('all')} disabled={exporting}
-            className="btn btn-secondary btn-sm flex items-center gap-1.5">
-            <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
-            </svg>
-            Export
-          </button>
-          {selected.length > 0 && (
-            <button onClick={() => handleExport('selected')} disabled={exporting}
-              className="btn btn-secondary btn-sm">
-              Export {selected.length} selected
-            </button>
+          {(can('export', 'read') && can('vessels', 'export')) && (
+            <>
+              <button onClick={() => handleExport('all')} disabled={exporting}
+                className="btn btn-secondary btn-sm flex items-center gap-1.5">
+                <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                </svg>
+                Export
+              </button>
+              {selected.length > 0 && (
+                <button onClick={() => handleExport('selected')} disabled={exporting}
+                  className="btn btn-secondary btn-sm">
+                  Export {selected.length} selected
+                </button>
+              )}
+            </>
           )}
         </div>
       </div>
@@ -136,9 +140,11 @@ export default function VesselList() {
                     <td><Badge label={v.status} /></td>
                     <td>
                       <div className="flex items-center gap-3">
+                        <button onClick={() => router.push(`/vessels/${v._id}`)}
+                          className="text-xs font-medium text-teal-600 hover:text-teal-800 transition">View</button>
                         {can('vessels', 'update') && (
-                          <button onClick={() => router.push(`/vessels/${v._id}`)}
-                            className="text-xs font-medium text-teal-600 hover:text-teal-800 transition">Edit</button>
+                          <button onClick={() => router.push(`/vessels/${v._id}/edit`)}
+                            className="text-xs font-medium text-gray-500 hover:text-gray-700 transition">Edit</button>
                         )}
                         {can('vessels', 'delete') && (
                           <button onClick={() => setDeleteTarget(v)}

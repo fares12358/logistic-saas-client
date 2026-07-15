@@ -9,10 +9,17 @@ const PermissionContext = createContext(null);
 export const PermissionProvider = ({ children }) => {
   const { user, isAuthenticated } = useAuth();
   const [permMap, setPermMap] = useState({});
+  const [permissionsLoaded, setPermissionsLoaded] = useState(false);
 
   useEffect(() => {
+    // SuperAdmin skips permission fetch — mark loaded immediately
+    if (isAuthenticated && user?.roleId?.isSystem) {
+      setPermissionsLoaded(true);
+      return;
+    }
     if (!isAuthenticated || !user?.roleId?._id) {
       setPermMap({});
+      setPermissionsLoaded(false);
       return;
     }
     api.get(`/permissions/${user.roleId._id}`)
@@ -20,8 +27,13 @@ export const PermissionProvider = ({ children }) => {
         const map = {};
         res.data.data.forEach((p) => { map[p.module] = p.actions; });
         setPermMap(map);
+        setPermissionsLoaded(true);
       })
-      .catch(() => setPermMap({}));
+      .catch((err) => {
+        console.error('[PermissionContext] Failed to load permissions:', err?.response?.status, err?.response?.data?.message);
+        setPermMap({});
+        setPermissionsLoaded(true);
+      });
   }, [isAuthenticated, user?.roleId?._id]);
 
   // SuperAdmin bypasses all checks
@@ -38,7 +50,7 @@ export const PermissionProvider = ({ children }) => {
   };
 
   return (
-    <PermissionContext.Provider value={{ can, isHidden, permMap }}>
+    <PermissionContext.Provider value={{ can, isHidden, permMap, permissionsLoaded }}>
       {children}
     </PermissionContext.Provider>
   );

@@ -1,9 +1,10 @@
 'use client';
 import { useRouter } from 'next/navigation';
-import PageHeader  from '@/components/ui/PageHeader';
+import PageGuard from '@/components/ui/PageGuard';
+import PageHeader from '@/components/ui/PageHeader';
 import InvoiceForm from '@/modules/invoices/InvoiceForm';
 
-export default function NewInvoicePage() {
+function NewInvoiceContent() {
   const router = useRouter();
   return (
     <div className="animate-fadeIn">
@@ -22,4 +23,8 @@ export default function NewInvoicePage() {
       <InvoiceForm />
     </div>
   );
+}
+
+export default function NewInvoicePage() {
+  return <PageGuard module="invoices" action="create"><NewInvoiceContent /></PageGuard>;
 }

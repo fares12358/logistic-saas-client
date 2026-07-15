@@ -1,16 +1,14 @@
 'use client';
 import { use } from 'react';
+import PageGuard from '@/components/ui/PageGuard';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useRouter } from 'next/navigation';
 import { bookingsService } from '@/services/bookings.service';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import BookingDetailCard from '@/modules/bookings/BookingDetailCard';
 
-export default function BookingDetailPage({ params }) {
-  const { id } = use(params);
+function BookingDetailContent({ id }) {
   const router = useRouter();
-  const qc = useQueryClient();
-
   const { data: booking, isLoading, isError, refetch } = useQuery({
     queryKey: ['booking', id],
     queryFn: () => bookingsService.getById(id).then(r => r.data.data),
@@ -31,10 +29,8 @@ export default function BookingDetailPage({ params }) {
   return (
     <div className="animate-fadeIn">
       <div className="flex items-center gap-2 mb-5">
-        <button
-          onClick={() => router.push('/bookings')}
-          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition"
-        >
+        <button onClick={() => router.push('/bookings')}
+          className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-gray-700 transition">
           <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
             <path strokeLinecap="round" d="M15 19l-7-7 7-7"/>
           </svg>
@@ -46,4 +42,9 @@ export default function BookingDetailPage({ params }) {
       <BookingDetailCard booking={booking} onMutated={refetch} />
     </div>
   );
+}
+
+export default function BookingDetailPage({ params }) {
+  const { id } = use(params);
+  return <PageGuard module="bookings"><BookingDetailContent id={id} /></PageGuard>;
 }

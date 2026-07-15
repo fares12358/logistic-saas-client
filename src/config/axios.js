@@ -20,11 +20,18 @@ api.interceptors.request.use(
 );
 
 // Handle 401 globally — clear token and redirect to login
+// EXCEPTION: skip redirect for auth endpoints (login/forgot-password/reset-password)
+// so that wrong-credential errors reach the form's catch block as normal rejections.
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      if (typeof window !== 'undefined') {
+      const url = error.config?.url || '';
+      const isAuthEndpoint = url.includes('/auth/login')
+        || url.includes('/auth/forgot-password')
+        || url.includes('/auth/reset-password');
+
+      if (!isAuthEndpoint && typeof window !== 'undefined') {
         localStorage.removeItem('token');
         localStorage.removeItem('user');
         window.location.href = '/login';
