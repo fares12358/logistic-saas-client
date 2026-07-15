@@ -6,7 +6,6 @@ import { useRouter } from 'next/navigation';
 import { Chart, registerables } from 'chart.js';
 import { dashboardService } from '@/services/dashboard.service';
 import { useAuth } from '@/context/AuthContext';
-import { usePermission } from '@/context/PermissionContext';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
 // ── React Icons ───────────────────────────────────────────────────────────────
@@ -249,11 +248,9 @@ function KpiCard({ icon: Icon, label, value, sub, iconBg, iconColor, loading }) 
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function DashboardPage() {
-  const { user }        = useAuth();
-  const { can, permissionsLoaded } = usePermission();
-  const router          = useRouter();
-  const isSuperAdmin    = user?.roleId?.isSystem === true;
-  const hasAccess       = isSuperAdmin || can('dashboard', 'read');
+  const { user }     = useAuth();
+  const router       = useRouter();
+  const isSuperAdmin = user?.roleId?.isSystem === true;
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -262,16 +259,17 @@ export default function DashboardPage() {
     return 'Good evening';
   };
 
-  // Block the stats query until we know the user has access
+  // Only fire the stats query for SuperAdmin.
+  // For any other role the layout is already redirecting away —
+  // render a spinner so nothing flashes while the redirect happens.
   const { data: statsRaw, isLoading } = useQuery({
     queryKey: ['dashboard-stats'],
     queryFn:  () => dashboardService.getStats().then(r => r.data.data),
     refetchInterval: 5 * 60 * 1000,
-    enabled: hasAccess,   // never fires for non-SuperAdmin
+    enabled: isSuperAdmin,
   });
 
-  // While permissions are resolving, show spinner (layout is already redirecting)
-  if (!permissionsLoaded || (!hasAccess && !isSuperAdmin)) {
+  if (!isSuperAdmin) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '60vh' }}>
         <LoadingSpinner />

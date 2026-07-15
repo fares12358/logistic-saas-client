@@ -37,32 +37,28 @@ export default function DashboardLayout({ children }) {
   const isSuperAdmin = user?.roleId?.isSystem === true;
 
   useEffect(() => {
+    // Not authenticated — send to login
     if (!isLoading && !isAuthenticated) {
       router.replace('/login');
       return;
     }
 
-    // Once permissions are loaded, redirect non-SuperAdmin away from /dashboard
+    // Non-SuperAdmin lands on /dashboard — redirect to first allowed module.
+    // Wait for permissionsLoaded so can() returns real values.
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
     const isOnDashboard = pathname === '/dashboard' || pathname.startsWith('/dashboard/');
 
-    if (
-      !isLoading &&
-      isAuthenticated &&
-      !isSuperAdmin &&
-      permissionsLoaded &&
-      isOnDashboard
-    ) {
+    if (!isLoading && isAuthenticated && !isSuperAdmin && permissionsLoaded && isOnDashboard) {
       const firstAllowed = FALLBACK_NAV.find(
         ({ module }) => !isHidden(module) && can(module, 'read')
       );
-      if (firstAllowed) {
-        router.replace(firstAllowed.href);
-      }
+      if (firstAllowed) router.replace(firstAllowed.href);
     }
   }, [isLoading, isAuthenticated, isSuperAdmin, permissionsLoaded]);
 
-  if (isLoading || (!isSuperAdmin && !permissionsLoaded && isAuthenticated)) {
+  // Only block render while auth is resolving.
+  // Do NOT block on permissionsLoaded — other pages don't need to wait.
+  if (isLoading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100vh', background: 'var(--surface)' }}>
         <LoadingSpinner />

@@ -51,9 +51,10 @@ const NAV = [
 ];
 
 export default function Sidebar() {
-  const pathname = usePathname();
+  const pathname       = usePathname();
   const { isHidden, can } = usePermission();
   const { user, logout } = useAuth();
+  const isSuperAdmin   = user?.roleId?.isSystem === true;
 
   return (
     <aside className="sidebar hide_scrollbar" style={{ width: 240, display: 'flex', flexDirection: 'column', height: '100vh', flexShrink: 0, overflowY: 'auto' }}>
@@ -79,7 +80,10 @@ export default function Sidebar() {
           <div key={section} style={{ marginBottom: 20 }}>
             <p className="sidebar-section-label">{section}</p>
             {items.map(({ label, href, module, icon }) => {
-              if (module && (isHidden(module) || !can(module, 'read'))) return null;
+              // Dashboard tab: SuperAdmin only — checked by role identity, not permissions
+              if (href === '/dashboard' && !isSuperAdmin) return null;
+              // All other modules: use normal RBAC
+              if (href !== '/dashboard' && module && (isHidden(module) || !can(module, 'read'))) return null;
               const active = pathname === href || (href !== '/dashboard' && pathname.startsWith(href));
               return (
                 <Link key={href} href={href} className={`sidebar-link ${active ? 'active' : ''}`}>
