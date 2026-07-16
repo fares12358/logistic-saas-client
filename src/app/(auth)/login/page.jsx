@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation';
 import toast from 'react-hot-toast';
 import { useAuth } from '@/context/AuthContext';
 import Input from '@/components/ui/Input';
+import PasswordInput from '@/components/ui/PasswordInput';
 import Button from '@/components/ui/Button';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 
@@ -16,19 +17,21 @@ export default function LoginPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated) router.replace('/dashboard');
-  }, [isAuthenticated, isLoading]);
+  }, [isLoading, isAuthenticated]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  if (isLoading) return (
-    <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <LoadingSpinner />
-    </div>
-  );
+  if (isLoading) {
+    return (
+      <div className="login-bg" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <LoadingSpinner />
+      </div>
+    );
+  }
+
+  if (isAuthenticated) return null;
 
   const onSubmit = async (data) => {
     try {
       await login(data.email, data.password);
-      // Layout will redirect non-SuperAdmin to their first permitted page.
-      // SuperAdmin lands on /dashboard directly.
       router.replace('/dashboard');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Invalid email or password.');
@@ -41,19 +44,9 @@ export default function LoginPage() {
 
         {/* Brand mark */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
-          <div style={{
-            width: 52, height: 52, borderRadius: 14,
-            background: 'linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
-            boxShadow: '0 4px 16px rgba(13,148,136,0.35)',
-          }}>
-            <svg width="26" height="26" fill="none" stroke="white" strokeWidth="2" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
-            </svg>
-          </div>
+         
           <h1 style={{ fontSize: 22, fontWeight: 700, color: 'var(--navy)', letterSpacing: '-0.4px', margin: 0 }}>
-            Logistics SaaS
+            Flow Marine
           </h1>
           <p style={{ fontSize: 13.5, color: 'var(--text-muted)', marginTop: 6 }}>
             Sign in to your operations platform
@@ -62,23 +55,19 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit(onSubmit)} style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
           <Input
-            id="email"
-            label="Email address"
-            type="email"
+            id="email" label="Email address" type="email"
             placeholder="you@company.com"
             error={errors.email?.message}
             {...register('email', {
               required: 'Email is required',
-              pattern: { value: /\S+@\S+\.\S+/, message: 'Enter a valid email' },
+              pattern:  { value: /\S+@\S+\.\S+/, message: 'Enter a valid email' },
             })}
           />
 
           <div>
-            <Input
-              id="password"
-              label="Password"
-              type="password"
-              placeholder="••••••••"
+            <PasswordInput
+              id="password" label="Password"
+              placeholder="Enter your password"
               error={errors.password?.message}
               {...register('password', { required: 'Password is required' })}
             />
@@ -95,9 +84,7 @@ export default function LoginPage() {
           </div>
 
           <Button
-            type="submit"
-            size="lg"
-            loading={isSubmitting}
+            type="submit" size="lg" loading={isSubmitting}
             style={{ marginTop: 8, width: '100%', justifyContent: 'center' }}
           >
             Sign in
@@ -105,7 +92,7 @@ export default function LoginPage() {
         </form>
 
         <p style={{ textAlign: 'center', fontSize: 12, color: 'var(--text-muted)', marginTop: 24 }}>
-          Logistics & Shipping Operations Platform
+        Flow Marine Operations Platform
         </p>
       </div>
     </div>

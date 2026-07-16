@@ -19,34 +19,34 @@ import UserForm from './UserForm';
 import { USER_STATUS } from '@/utils/constants';
 
 export default function UserList() {
-  const qc      = useQueryClient();
+  const qc = useQueryClient();
   const { can } = usePermission();
 
-  const [page,         setPage]         = useState(1);
-  const [search,       setSearch]       = useState('');
-  const [status,       setStatus]       = useState('');
-  const [modal,        setModal]        = useState(null);
+  const [page, setPage] = useState(1);
+  const [search, setSearch] = useState('');
+  const [status, setStatus] = useState('');
+  const [modal, setModal] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [resendTarget, setResendTarget] = useState(null);
 
   const { data, isLoading } = useQuery({
     queryKey: ['users', page, search, status],
-    queryFn:  () => usersService.list({ page, limit: 20, search, status }).then(r => r.data),
+    queryFn: () => usersService.list({ page, limit: 20, search, status }).then(r => r.data),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id) => usersService.remove(id),
-    onSuccess:  () => { toast.success('User deleted'); qc.invalidateQueries(['users']); setDeleteTarget(null); },
-    onError:    (e) => toast.error(e.response?.data?.message || 'Delete failed'),
+    onSuccess: () => { toast.success('User deleted'); qc.invalidateQueries(['users']); setDeleteTarget(null); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Delete failed'),
   });
 
   const resendMutation = useMutation({
     mutationFn: (id) => usersService.resendInvite(id),
-    onSuccess:  () => { toast.success('Invitation resent'); setResendTarget(null); },
-    onError:    (e) => toast.error(e.response?.data?.message || 'Failed to resend'),
+    onSuccess: () => { toast.success('Invitation resent'); setResendTarget(null); },
+    onError: (e) => toast.error(e.response?.data?.message || 'Failed to resend'),
   });
 
-  const users      = data?.data || [];
+  const users = data?.data || [];
   const pagination = data?.pagination;
 
   return (
@@ -88,14 +88,7 @@ export default function UserList() {
                 <tr key={u._id} className="table-row">
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                      <div style={{
-                        width: 30, height: 30, borderRadius: 8, flexShrink: 0,
-                        background: 'linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%)',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center',
-                        fontSize: 12, fontWeight: 700, color: '#fff',
-                      }}>
-                        {u.name?.[0]?.toUpperCase()}
-                      </div>
+                      
                       <div>
                         <span style={{ fontWeight: 500, color: 'var(--text-primary)' }}>{u.name}</span>
                         {u.isInvited && !u.password && (

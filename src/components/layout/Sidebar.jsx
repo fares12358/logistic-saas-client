@@ -53,7 +53,7 @@ const NAV = [
 export default function Sidebar() {
   const pathname       = usePathname();
   const { isHidden, can } = usePermission();
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const isSuperAdmin   = user?.roleId?.isSystem === true;
 
   return (
@@ -99,14 +99,7 @@ export default function Sidebar() {
       {/* User footer */}
       <div style={{ padding: '12px 16px 16px', borderTop: '1px solid var(--navy-border)' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 10 }}>
-          <div style={{
-            width: 32, height: 32, borderRadius: 8,
-            background: 'linear-gradient(135deg, var(--teal) 0%, var(--teal-dark) 100%)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: 13, fontWeight: 700, color: '#fff', flexShrink: 0,
-          }}>
-            {user?.name?.[0]?.toUpperCase() || 'U'}
-          </div>
+          
           <div style={{ overflow: 'hidden' }}>
             <p style={{ fontSize: 13, fontWeight: 600, color: '#E2E8F0', margin: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {user?.name}
@@ -116,22 +109,7 @@ export default function Sidebar() {
             </p>
           </div>
         </div>
-        <button
-          onClick={logout}
-          style={{
-            width: '100%', textAlign: 'left', fontSize: 12,
-            color: '#475569', background: 'none', border: 'none',
-            cursor: 'pointer', padding: '4px 0', transition: 'color 0.15s',
-            display: 'flex', alignItems: 'center', gap: 6,
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = '#F87171'}
-          onMouseLeave={e => e.currentTarget.style.color = '#475569'}
-        >
-          <svg width="13" height="13" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
-            <path strokeLinecap="round" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
-          </svg>
-          Sign out
-        </button>
+       
       </div>
     </aside>
   );

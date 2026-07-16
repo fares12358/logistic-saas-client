@@ -3,36 +3,31 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1',
-  headers: { 'Content-Type': 'application/json' },
+  baseURL:         process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api/v1',
+  headers:         { 'Content-Type': 'application/json' },
+  withCredentials: true,
 });
 
-// Attach JWT token to every request
-api.interceptors.request.use(
-  (config) => {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('token');
-      if (token) config.headers.Authorization = `Bearer ${token}`;
-    }
-    return config;
-  },
-  (error) => Promise.reject(error)
-);
-
-// Handle 401 globally — clear token and redirect to login
-// EXCEPTION: skip redirect for auth endpoints (login/forgot-password/reset-password)
-// so that wrong-credential errors reach the form's catch block as normal rejections.
+// ─── Global 401 handler ───────────────────────────────────────────────────────
+// Only redirect to /login for 401s that come from protected API calls.
+// Auth-related endpoints must be exempted so their errors bubble up normally:
+//   - /auth/login         → wrong credentials must show toast, not redirect
+//   - /auth/me            → called on every mount to rehydrate session;
+//                           a 401 here means "not logged in" — handled by
+//                           AuthContext setting isAuthenticated=false, NOT a redirect
+//   - /auth/forgot-password, /auth/reset-password → public flows
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
       const url = error.config?.url || '';
-      const isAuthEndpoint = url.includes('/auth/login')
-        || url.includes('/auth/forgot-password')
-        || url.includes('/auth/reset-password');
+      const isExempt =
+        url.includes('/auth/login') ||
+        url.includes('/auth/me') ||
+        url.includes('/auth/forgot-password') ||
+        url.includes('/auth/reset-password');
 
-      if (!isAuthEndpoint && typeof window !== 'undefined') {
-        localStorage.removeItem('token');
+      if (!isExempt && typeof window !== 'undefined') {
         localStorage.removeItem('user');
         window.location.href = '/login';
       }
